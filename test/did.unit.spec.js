@@ -73,11 +73,18 @@ describe('Test DID', function() {
     expect(extIds[2]).to.equalBytes(did.nonce);
   });
 
-  it('should export entry data with management key', function() {
-    const alias = 'my-management-key';
-    const priority = 0;
+  it('should export entry data with management keys', function() {
+    const firstManagementKeyAlias = 'my-first-management-key';
+    const firstManagementKeyPriority = 0;
+    const secondManagementKeyAlias = 'my-second-management-key';
+    const secondManagementKeyPriority = 1;
+    const secondManagementKeyType = KeyType.ECDSA;
+    const secondManagementKeyController = `${DID_METHOD_NAME}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b8005`;
+    const secondManagementKeyPriorityRequirement = 2;
+
     const did = DID.builder()
-      .managementKey(alias, priority)
+      .managementKey(firstManagementKeyAlias, firstManagementKeyPriority)
+      .managementKey(secondManagementKeyAlias, secondManagementKeyPriority, secondManagementKeyType, secondManagementKeyController, secondManagementKeyPriorityRequirement)
       .build();
 
     const entryData = did.exportEntryData();
@@ -85,17 +92,25 @@ describe('Test DID', function() {
     assert.strictEqual(content['didMethodVersion'], DID_METHOD_SPEC_V020);
 
     const managementKeys = content['managementKey'];
-    assert.strictEqual(managementKeys.length, 1);
+    assert.strictEqual(managementKeys.length, 2);
     assert.isUndefined(content['didKey']);
     assert.isUndefined(content['services']);
 
     const firstManagementKey = managementKeys[0];
-    assert.strictEqual(firstManagementKey.id, `${did.id}#${alias}`);
-    assert.strictEqual(firstManagementKey.priority, priority);
+    assert.strictEqual(firstManagementKey.id, `${did.id}#${firstManagementKeyAlias}`);
+    assert.strictEqual(firstManagementKey.priority, firstManagementKeyPriority);
     assert.strictEqual(firstManagementKey.type, KeyType.EdDSA);
     assert.strictEqual(firstManagementKey.controller, did.id);
     assert.strictEqual(firstManagementKey.publicKeyBase58, did.managementKeys[0].publicKey);
     assert.isUndefined(firstManagementKey.priorityRequirement);
+
+    const secondManagementKey = managementKeys[1];
+    assert.strictEqual(secondManagementKey.id, `${did.id}#${secondManagementKeyAlias}`);
+    assert.strictEqual(secondManagementKey.priority, secondManagementKeyPriority);
+    assert.strictEqual(secondManagementKey.type, secondManagementKeyType);
+    assert.strictEqual(secondManagementKey.controller, secondManagementKeyController);
+    assert.strictEqual(secondManagementKey.publicKeyBase58, did.managementKeys[1].publicKey);
+    assert.strictEqual(secondManagementKey.priorityRequirement, secondManagementKeyPriorityRequirement);
   });
 
   it('should export entry data with did key and service', function() {
