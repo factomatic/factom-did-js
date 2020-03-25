@@ -26,10 +26,8 @@ class AbstractDIDKey {
       this.underlyingKey = new Ed25519Key();
     } else if (this.keyType == KeyType.ECDSA) {
       this.underlyingKey = new ECDSASecp256k1Key();
-    } else if (this.keyType == KeyType.RSA) {
-      this.underlyingKey = new RSAKey();
     } else {
-      throw new Error(`Unsupported signature type: ${this.keyType}`);
+      this.underlyingKey = new RSAKey();
     }
   }
 
