@@ -35,7 +35,7 @@ class DID {
       throw new Error('The DID must have at least one management key.');
     }
 
-    if (!this.managementKeys.find(mk => mk.priority === 0)) {
+    if (!this.managementKeys.some(mk => mk.priority === 0)) {
       throw new Error('At least one management key must have priority 0.');
     }
 
