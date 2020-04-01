@@ -104,13 +104,19 @@ class DIDBuilder {
   }
 
   /**
+  * @returns {string} The chain ID where this DID is (or will be) stored.
+  */
+  get chainId() {
+    return this._id.split(":").slice(-1).pop();
+  }
+
+  /**
   * Sets the DID network to mainnet.
   * @returns {DIDBuilder} - DIDBuilder instance.
   */
   mainnet() {
     this._network = Network.Mainnet;
-    const chainId = this._id.split(":").slice(-1).pop();
-    this._id = `${DID_METHOD_NAME}:${this._network}:${chainId}`;
+    this._id = `${DID_METHOD_NAME}:${this._network}:${this.chainId}`;
     
     return this;
   }
@@ -121,8 +127,7 @@ class DIDBuilder {
   */
   testnet() {
     this._network = Network.Testnet;
-    const chainId = this._id.split(":").slice(-1).pop();
-    this._id = `${DID_METHOD_NAME}:${this._network}:${chainId}`;
+    this._id = `${DID_METHOD_NAME}:${this._network}:${this.chainId}`;
 
     return this;
   }
