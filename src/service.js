@@ -55,7 +55,7 @@ class Service {
   }
 
   /**
-   * Constructs the full ID of the key.
+   * Constructs the full ID of the service.
    * @param {string} didId
    * @returns {string}
   */
