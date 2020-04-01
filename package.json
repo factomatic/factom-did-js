@@ -1,13 +1,12 @@
 {
-  "name": "js-factom-did",
-  "version": "1.0.0",
-  "description": "js-factom-did is a JavaScript library for working with DIDs on the Factom blockchain.",
+  "name": "factom-did-js",
+  "version": "0.1.0",
+  "description": "factom-did-js is a JavaScript library for working with DIDs on the Factom blockchain.",
   "main": "dist/index.js",
   "scripts": {
     "build": "webpack",
     "test": "mocha 'test/*.spec.js'"
   },
-  "author": "",
   "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.8.7",
