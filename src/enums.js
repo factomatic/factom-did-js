@@ -1,21 +1,23 @@
 const Network = {
   Mainnet: 'mainnet',
-  Testnet: 'testnet'
+  Testnet: 'testnet',
+  Unspecified: undefined
 }
 
 const KeyType = {
-  EdDSA: "Ed25519VerificationKey",
-  ECDSA: "ECDSASecp256k1VerificationKey",
-  RSA: "RSAVerificationKey"
+  EdDSA: 'Ed25519VerificationKey',
+  ECDSA: 'ECDSASecp256k1VerificationKey',
+  RSA: 'RSAVerificationKey'
 }
 
 const DIDKeyPurpose = {
-  PublicKey: "publicKey",
-  AuthenticationKey: "authenticationKey"
+  PublicKey: 'publicKey',
+  AuthenticationKey: 'authenticationKey'
 }
 
 const EntryType = {
-  Create: "DIDManagement"
+  Create: 'DIDManagement',
+  Update: 'DIDUpdate'
 }
 
 module.exports = {

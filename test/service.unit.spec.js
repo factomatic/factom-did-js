@@ -1,5 +1,7 @@
 const assert = require('chai').assert,
-  { DID } = require('../src/did');
+  { DID } = require('../src/did'),
+  { DID_METHOD_NAME } = require('../src/constants'),
+  { Service } = require('../src/service');
 
 describe('Test Services', function() {
   it('should add services', function() {
@@ -128,5 +130,15 @@ describe('Test Services', function() {
         'Custom fields must be an object!'
       );
     });
+  });
+
+  it('should throw error if entry schema version is invalid', function() {
+    const didId = `${DID_METHOD_NAME}:db4549470d24534fac28569d0f9c65b5ecef8d6332bc788b4d1b8dc1c2dae13a`;
+    const service = new Service('gmail-service', 'EmailService', 'https://gmail.com', 1);
+    const entrySchemaVersion = '1.1.0';
+    assert.throw(
+      () => service.toEntryObj(didId, entrySchemaVersion),
+      `Unknown schema version: ${entrySchemaVersion}`
+    );
   });
 });

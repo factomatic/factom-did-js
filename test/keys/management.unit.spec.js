@@ -1,7 +1,8 @@
 const assert = require('chai').assert,
   { DID } = require('../../src/did'),
   { DID_METHOD_NAME } = require('../../src/constants'),
-  { KeyType } = require('../../src/enums');
+  { KeyType } = require('../../src/enums'),
+  { ManagementKey } = require('../../src/keys/management');
 
 describe('Test Management Keys', function() {
   it('should add management keys', function() {
@@ -32,6 +33,8 @@ describe('Test Management Keys', function() {
     assert.isUndefined(firstGeneratedMgmtKey.priorityRequirement);
     assert.isString(firstGeneratedMgmtKey.publicKey);
     assert.isString(firstGeneratedMgmtKey.privateKey);
+    assert.isDefined(firstGeneratedMgmtKey.verifyingKey);
+    assert.isDefined(firstGeneratedMgmtKey.signingKey);
 
     const secondGeneratedMgmtKey = did.managementKeys[1];
     assert.strictEqual(secondGeneratedMgmtKey.alias, secondMgmtKeyAlias);
@@ -39,8 +42,10 @@ describe('Test Management Keys', function() {
     assert.strictEqual(secondGeneratedMgmtKey.keyType, secondMgmtKeyType);
     assert.strictEqual(secondGeneratedMgmtKey.controller, secondMgmtKeyController);
     assert.strictEqual(secondGeneratedMgmtKey.priorityRequirement, secondMgmtKeyPriorityRequirement);
-    assert.isString(firstGeneratedMgmtKey.publicKey);
-    assert.isString(firstGeneratedMgmtKey.privateKey);
+    assert.isString(secondGeneratedMgmtKey.publicKey);
+    assert.isString(secondGeneratedMgmtKey.privateKey);
+    assert.isDefined(secondGeneratedMgmtKey.verifyingKey);
+    assert.isDefined(secondGeneratedMgmtKey.signingKey);
 
     const thirdGeneratedMgmtKey = did.managementKeys[2];
     assert.strictEqual(thirdGeneratedMgmtKey.alias, thirdMgmtKeyAlias);
@@ -50,6 +55,8 @@ describe('Test Management Keys', function() {
     assert.isUndefined(thirdGeneratedMgmtKey.priorityRequirement);
     assert.isString(thirdGeneratedMgmtKey.publicKey);
     assert.isString(thirdGeneratedMgmtKey.privateKey);
+    assert.isDefined(thirdGeneratedMgmtKey.verifyingKey);
+    assert.isDefined(thirdGeneratedMgmtKey.signingKey);
 
     assert.strictEqual(did.managementKeys.length, 3);
   });
@@ -120,5 +127,15 @@ describe('Test Management Keys', function() {
         'Priority requirement must be a non-negative integer.'
       );
     });
+  });
+
+  it('should throw error if entry schema version is invalid', function() {
+    const didId = `${DID_METHOD_NAME}:db4549470d24534fac28569d0f9c65b5ecef8d6332bc788b4d1b8dc1c2dae13a`;
+    const key = new ManagementKey('management-key-1', 0, KeyType.EdDSA, didId);
+    const entrySchemaVersion = '1.1.0';
+    assert.throw(
+      () => key.toEntryObj(didId, entrySchemaVersion),
+      `Unknown schema version: ${entrySchemaVersion}`
+    );
   });
 });

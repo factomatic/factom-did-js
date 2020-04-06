@@ -1,10 +1,12 @@
 const crypto = require('crypto'),
   { calculateChainId, calculateEntrySize } = require('./blockchain'),
+  { DIDUpdater } = require('./updater'),
   { DID_METHOD_SPEC_V020, DID_METHOD_NAME, ENTRY_SCHEMA_V100, ENTRY_SIZE_LIMIT } = require('./constants'),
   { DIDKey } = require('./keys/did'),
   { ManagementKey } = require('./keys/management'),
   { Network, KeyType, DIDKeyPurpose, EntryType } = require('./enums'),
-  { Service } = require('./service');
+  { Service } = require('./service'),
+  { validateDIDId } = require('./validators');
 
 /**
  * Class that allows exporting of the constructed DID into a format suitable for recording on the Factom blockchain.
@@ -77,30 +79,50 @@ class DID {
 
   /**
   * DID builder static factory.
-  * @param {string} [specVersion] - Optional DID Method version.
+  * @param {string} didId - The decentralized identifier, a 32 byte hexadecimal string.
+  * @param {ManagementKey[]} [managementKeys] - A list of management keys.
+  * @param {DIDKey[]} [didKeys] - A list of DID keys.
+  * @param {Service[]} [services] - A list of services.
+  * @param {string} [specVersion] - DID Method version.
   * @returns {DIDBuilder} A new DIDBuilder.
   */
-  static builder(specVersion = DID_METHOD_SPEC_V020) {
-    return new DIDBuilder(specVersion);
+  static builder(didId, managementKeys, didKeys, services, specVersion = DID_METHOD_SPEC_V020) {
+    return new DIDBuilder(didId, managementKeys, didKeys, services, specVersion);
   }
 }
 
 /**
  * Class that enables the construction of a DID, by facilitating the construction of management keys and DID keys and the
-    addition of services.
+ *  addition of services.
+ * @param {string} didId - The decentralized identifier, a 32 byte hexadecimal string.
+ * @param {ManagementKey[]} managementKeys - A list of management keys.
+ * @param {DIDKey[]} didKeys - A list of DID keys.
+ * @param {Service[]} services - A list of services.
  * @param {string} specVersion - DID Method version.
  */
 class DIDBuilder {
-  constructor(specVersion) {
-    this._id = this._generateDIDId();
-    this._managementKeys = [];
-    this._didKeys = [];
-    this._services = [];
-    this._network = undefined;
+  constructor(didId, managementKeys, didKeys, services, specVersion) {
+    this._id = (didId &&  this._isValidDIDId(didId)) ? didId : this._generateDIDId();
+    this._managementKeys = managementKeys ? managementKeys : [];
+    this._didKeys = didKeys ? didKeys : [];
+    this._services = services ? services : [];
+    this._network = this._getNetworkFromId(this._id);
     this._specVersion = specVersion;
 
     this.usedKeyAliases = new Set();
     this.usedServiceAliases = new Set();
+
+    this._managementKeys.forEach(key => {
+      this._checkAliasIsUnique(this.usedKeyAliases, key.alias);
+    });
+
+    this._didKeys.forEach(key => {
+      this._checkAliasIsUnique(this.usedKeyAliases, key.alias);
+    });
+
+    this._services.forEach(service => {
+      this._checkAliasIsUnique(this.usedServiceAliases, service.alias);
+    });
   }
 
   /**
@@ -108,6 +130,17 @@ class DIDBuilder {
   */
   get chainId() {
     return this._id.split(":").slice(-1).pop();
+  }
+
+  /**
+  * @returns {DIDUpdater} - An object allowing updates to the existing DID.
+  */
+  update() {
+    if (this._managementKeys.length === 0) {
+      throw new Error('Cannot update DID without management keys.');
+    }
+
+    return new DIDUpdater(this);
   }
 
   /**
@@ -215,12 +248,30 @@ class DIDBuilder {
     return `${DID_METHOD_NAME}:${chainId}`;
   }
 
+  _isValidDIDId(didId) {
+    try {
+      validateDIDId(didId);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   _checkAliasIsUnique(usedAliases, alias) {
     if (usedAliases.has(alias)) {
       throw new Error(`Duplicate alias "${alias}" detected.`)
     }
 
     usedAliases.add(alias);
+  }
+
+  _getNetworkFromId(didId) {
+    const parts = didId.split(':');
+    if (parts.length === 4) {
+      return parts[2];
+    }
+
+    return Network.Unspecified;
   }
 }
 
