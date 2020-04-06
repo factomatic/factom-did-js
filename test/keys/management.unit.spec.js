@@ -1,7 +1,7 @@
 const assert = require('chai').assert,
-  { DID } = require('../src/did'),
-  { DID_METHOD_NAME } = require('../src/constants'),
-  { KeyType } = require('../src/enums');
+  { DID } = require('../../src/did'),
+  { DID_METHOD_NAME } = require('../../src/constants'),
+  { KeyType } = require('../../src/enums');
 
 describe('Test Management Keys', function() {
   it('should add management keys', function() {
