@@ -1,6 +1,7 @@
 const crypto = require('crypto'),
   { calculateChainId, calculateEntrySize } = require('./blockchain'),
   { DIDDeactivator } = require('./deactivator'),
+  { DIDVersionUpgrader } = require('./upgrader'),
   { DIDUpdater } = require('./updater'),
   { DID_METHOD_SPEC_V020, DID_METHOD_NAME, ENTRY_SCHEMA_V100, ENTRY_SIZE_LIMIT } = require('./constants'),
   { DIDKey } = require('./keys/did'),
@@ -153,6 +154,18 @@ class DIDBuilder {
     }
     
     return new DIDDeactivator(this);
+  }
+
+  /**
+  * @param {string} newSpecVersion - The new DID Method version
+  * @returns {DIDVersionUpgrader} - An object allowing method spec version upgrade of the existing DID.
+  */
+  upgradeSpecVersion(newSpecVersion) {
+    if (this._managementKeys.length === 0) {
+      throw new Error('Cannot upgrade method spec version for DID without management keys.');
+    }
+    
+    return new DIDVersionUpgrader(this, newSpecVersion);
   }
 
   /**
