@@ -51,11 +51,8 @@ class RSAKey {
       throw new Error('Message must be a string or Buffer.');
     }
 
-    const sha256Hash = crypto.createHash('sha256');
-    sha256Hash.update(message);
-
     const sign = crypto.createSign('SHA256');
-    sign.update(sha256Hash.digest());
+    sign.update(message);
     sign.end();
     return sign.sign(this.signingKey);
   }
@@ -75,11 +72,8 @@ class RSAKey {
       throw new Error('Message must be a string or Buffer.');
     }
   
-    const sha256Hash = crypto.createHash('sha256');
-    sha256Hash.update(message);
-  
     const verify = crypto.createVerify('SHA256');
-    verify.update(sha256Hash.digest());
+    verify.update(message);
     verify.end();
     return verify.verify(this.verifyingKey, signature);
   }
