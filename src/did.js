@@ -1,5 +1,6 @@
 const crypto = require('crypto'),
   { calculateChainId, calculateEntrySize } = require('./blockchain'),
+  { DIDDeactivator } = require('./deactivator'),
   { DIDUpdater } = require('./updater'),
   { DID_METHOD_SPEC_V020, DID_METHOD_NAME, ENTRY_SCHEMA_V100, ENTRY_SIZE_LIMIT } = require('./constants'),
   { DIDKey } = require('./keys/did'),
@@ -141,6 +142,17 @@ class DIDBuilder {
     }
 
     return new DIDUpdater(this);
+  }
+
+  /**
+  * @returns {DIDDeactivator} - An object allowing deactivation of the existing DID.
+  */
+  deactivate() {
+    if (this._managementKeys.length === 0) {
+      throw new Error('Cannot deactivate DID without a management key of priority 0.');
+    }
+    
+    return new DIDDeactivator(this);
   }
 
   /**
