@@ -6,7 +6,7 @@ const crypto = require('crypto'),
   { ManagementKey } = require('./keys/management'),
   { Network, KeyType, DIDKeyPurpose, EntryType } = require('./enums'),
   { Service } = require('./service'),
-  { validateDIDId } = require('./validators');
+  { isValidDIDId } = require('./validators');
 
 /**
  * Class that allows exporting of the constructed DID into a format suitable for recording on the Factom blockchain.
@@ -102,7 +102,7 @@ class DID {
  */
 class DIDBuilder {
   constructor(didId, managementKeys, didKeys, services, specVersion) {
-    this._id = (didId &&  this._isValidDIDId(didId)) ? didId : this._generateDIDId();
+    this._id = (didId &&  isValidDIDId(didId)) ? didId : this._generateDIDId();
     this._managementKeys = managementKeys ? managementKeys : [];
     this._didKeys = didKeys ? didKeys : [];
     this._services = services ? services : [];
@@ -246,15 +246,6 @@ class DIDBuilder {
     this._nonce = crypto.randomBytes(32);
     const chainId = calculateChainId([EntryType.Create, ENTRY_SCHEMA_V100, this._nonce]);
     return `${DID_METHOD_NAME}:${chainId}`;
-  }
-
-  _isValidDIDId(didId) {
-    try {
-      validateDIDId(didId);
-      return true;
-    } catch {
-      return false;
-    }
   }
 
   _checkAliasIsUnique(usedAliases, alias) {

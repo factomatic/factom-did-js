@@ -3,7 +3,7 @@ const { ECDSASecp256k1Key } = require('./ecdsa'),
   { ENTRY_SCHEMA_V100 } = require('../constants'),
   { KeyType } = require('../enums'),
   { RSAKey } = require('./rsa'),
-  { validateAlias, validateKeyType, validateDIDId, validatePriorityRequirement } = require('../validators');
+  { isValidDIDId, validateAlias, validateKeyType, validatePriorityRequirement } = require('../validators');
 
 /**
  * Class representing the common fields and functionality in a ManagementKey and a DIDKey.
@@ -119,7 +119,11 @@ class AbstractDIDKey {
   _validateInputParams(alias, keyType, controller, priorityRequirement) {
     validateAlias(alias);
     validateKeyType(keyType);
-    validateDIDId(controller);
+
+    if (!isValidDIDId(controller)) {
+      throw new Error('Controller must be a valid DID Id.');
+    }
+
     validatePriorityRequirement(priorityRequirement);
   }
 }
