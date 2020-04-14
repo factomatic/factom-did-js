@@ -1,11 +1,21 @@
 const {assert, expect } = require('chai').use(require('chai-bytes')),
   { DID } = require('../src/did'),
+  { DIDKey } = require('../src/keys/did'),
   { DID_METHOD_SPEC_V020, DID_METHOD_NAME, ENTRY_SCHEMA_V100 } = require('../src/constants'),
-  { Network, EntryType, KeyType, DIDKeyPurpose } = require('../src/enums');
+  { ManagementKey } = require('../src/keys/management'),
+  { Network, EntryType, KeyType, DIDKeyPurpose } = require('../src/enums'),
+  { Service } = require('../src/service');
 
 const idRegex = new RegExp(`^${DID_METHOD_NAME}:[a-f0-9]{64}$`);
 
 describe('Test DID', function() {
+  it('should throw error if DID class is instantiated directly', function() {
+    assert.throw(
+      () => new DID(),
+      'Use `DID.builder()` syntax to create a new DID'
+    );
+  });
+
   it('should generate new empty DID', function() {
     const did = DID.builder().build();
 
@@ -20,10 +30,59 @@ describe('Test DID', function() {
     assert.strictEqual(did.specVersion, DID_METHOD_SPEC_V020);
   });
 
-  it('should throw error if DID class is instantiated directly', function() {
+  it('should initialize DIDBuilder correctly', function() {
+    const didId = `${DID_METHOD_NAME}:${Network.Testnet}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b8005`;
+    const managementKeys = [
+      new ManagementKey('my-first-key', 0, KeyType.EdDSA, didId),
+      new ManagementKey('my-second-key', 1, KeyType.ECDSA, didId, 0)
+    ];
+    const didKeys = [new DIDKey('my-did-key', DIDKeyPurpose.AuthenticationKey, KeyType.RSA, didId, 1)];
+    const services = [new Service('my-photo-service', 'PhotoStreamService', 'https://myphoto.com', 1)];
+
+    const didBuilder = DID.builder(didId, managementKeys, didKeys, services);
+    assert.strictEqual(didBuilder._id, didId);
+    assert.strictEqual(didBuilder._managementKeys, managementKeys);
+    assert.strictEqual(didBuilder._didKeys, didKeys);
+    assert.strictEqual(didBuilder._services, services);
+    assert.strictEqual(didBuilder._network, Network.Testnet);
+    assert.strictEqual(didBuilder._specVersion, DID_METHOD_SPEC_V020);
+    assert.strictEqual(didBuilder.usedKeyAliases.size, 3);
+    assert.strictEqual(didBuilder.usedServiceAliases.size, 1);
+    assert.isTrue(didBuilder.usedKeyAliases.has('my-first-key'));
+    assert.isTrue(didBuilder.usedKeyAliases.has('my-second-key'));
+    assert.isTrue(didBuilder.usedKeyAliases.has('my-did-key'));
+    assert.isTrue(didBuilder.usedServiceAliases.has('my-photo-service'));
+  });
+
+  it('should generate new didId if the one passed is invalid', function() {
+    const didId = `${DID_METHOD_NAME}:${Network.Testnet}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b800`;
+    const didBuilder = DID.builder(didId);
+    assert.notEqual(didBuilder._id, didId);
+  });
+
+  it('should throw error if duplicate key alias is passed', function() {
+    const alias = 'my-first-key';
+    const didId = `${DID_METHOD_NAME}:${Network.Testnet}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b8005`;
+    const managementKeys = [new ManagementKey(alias, 0, KeyType.EdDSA, didId)];
+    const didKeys = [new DIDKey(alias, DIDKeyPurpose.AuthenticationKey, KeyType.RSA, didId, 1)];
+
     assert.throw(
-      () => new DID(),
-      'Use `DID.builder()` syntax to create a new DID'
+      () => DID.builder(didId, managementKeys, didKeys),
+      `Duplicate alias "${alias}" detected.`
+    );
+  });
+
+  it('should throw error if duplicate service alias is passed', function() {
+    const alias = 'my-photo-service';
+    const didId = `${DID_METHOD_NAME}:${Network.Testnet}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b8005`;
+    const services = [
+      new Service(alias, 'PhotoStreamService', 'https://myphoto.com', 1),
+      new Service(alias, 'PhotoStreamService', 'https://myphoto.com', 1)
+    ];
+
+    assert.throw(
+      () => DID.builder(didId, undefined, undefined, services),
+      `Duplicate alias "${alias}" detected.`
     );
   });
 

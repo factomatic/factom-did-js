@@ -3,3 +3,7 @@ dist/
 
 # Dependencies directory
 node_modules/
+
+#Coverage
+coverage/
+.nyc_output/

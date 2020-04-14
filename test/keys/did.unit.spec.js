@@ -1,7 +1,7 @@
 const assert = require('chai').assert,
-  { DID } = require('../src/did'),
-  { DID_METHOD_NAME } = require('../src/constants'),
-  { KeyType, DIDKeyPurpose } = require('../src/enums');
+  { DID } = require('../../src/did'),
+  { DID_METHOD_NAME } = require('../../src/constants'),
+  { KeyType, DIDKeyPurpose } = require('../../src/enums');
 
 describe('Test DID Keys', function() {
   it('should add DID keys', function() {
