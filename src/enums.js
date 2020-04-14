@@ -17,7 +17,8 @@ const DIDKeyPurpose = {
 
 const EntryType = {
   Create: 'DIDManagement',
-  Update: 'DIDUpdate'
+  Update: 'DIDUpdate',
+  Deactivation: 'DIDDeactivation',
 }
 
 module.exports = {
