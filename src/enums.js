@@ -19,6 +19,7 @@ const EntryType = {
   Create: 'DIDManagement',
   Update: 'DIDUpdate',
   Deactivation: 'DIDDeactivation',
+  VersionUpgrade: 'DIDMethodVersionUpgrade'
 }
 
 module.exports = {
