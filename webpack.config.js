@@ -3,7 +3,7 @@ const path = require('path');
 module.exports = {
   mode: 'production',
   entry: {
-    'factom-did': path.resolve(__dirname, 'src/index.js')
+    'factom-did': './src/factom-did.js'
   }, 
   output: {
     path: path.resolve(__dirname, 'dist'),

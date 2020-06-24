@@ -1,6 +1,6 @@
 const { AbstractDIDKey } = require('./abstract'),
-  { DIDKeyPurpose } = require('../enums'),
-  { ENTRY_SCHEMA_V100 } = require('../constants');
+    { DIDKeyPurpose } = require('../enums'),
+    { ENTRY_SCHEMA_V100 } = require('../constants');
 
 /**
  * Application-level key, which can be used for authentication, signing requests, encryption, decryption, etc.
@@ -14,39 +14,43 @@ const { AbstractDIDKey } = require('./abstract'),
  * @property {string | Buffer} [privateKey] - A private key.
  */
 class DIDKey extends AbstractDIDKey {
-  constructor (alias, purpose, keyType, controller, priorityRequirement, publicKey, privateKey) {
-    super(alias, keyType, controller, priorityRequirement, publicKey, privateKey);
+    constructor(alias, purpose, keyType, controller, priorityRequirement, publicKey, privateKey) {
+        super(alias, keyType, controller, priorityRequirement, publicKey, privateKey);
 
-    let purposes;
-    if (Array.isArray(purpose)) {
-      purposes = purpose;
-    } else if (typeof purpose == "string") {
-      purposes = [purpose];
-    } else {
-      throw new Error('Invalid purpose type.')
+        let purposes;
+        if (Array.isArray(purpose)) {
+            purposes = purpose;
+        } else if (typeof purpose == 'string') {
+            purposes = [purpose];
+        } else {
+            throw new Error('Invalid purpose type.');
+        }
+
+        if (
+            new Set(purposes.values()).size !== purposes.length ||
+            ![1, 2].includes(purposes.length)
+        ) {
+            throw new Error(
+                `Purpose must contain one or both of ${DIDKeyPurpose.PublicKey} and ${DIDKeyPurpose.AuthenticationKey} without repeated values`
+            );
+        }
+
+        purposes.forEach(purpose => {
+            if (![DIDKeyPurpose.PublicKey, DIDKeyPurpose.AuthenticationKey].includes(purpose)) {
+                throw new Error('Purpose must contain only valid DIDKeyPurpose values.');
+            }
+        });
+
+        this.purpose = purposes;
     }
 
-    if (new Set(purposes.values()).size !== purposes.length
-      || ![1, 2].includes(purposes.length)) {
-        throw new Error(`Purpose must contain one or both of ${DIDKeyPurpose.PublicKey} and ${DIDKeyPurpose.AuthenticationKey} without repeated values`);
+    toEntryObj(didId, version = ENTRY_SCHEMA_V100) {
+        let entryObj = super.toEntryObj(didId, version);
+        entryObj['purpose'] = this.purpose;
+        return entryObj;
     }
-
-    purposes.forEach(purpose => {
-      if (![DIDKeyPurpose.PublicKey, DIDKeyPurpose.AuthenticationKey].includes(purpose)) {
-        throw new Error('Purpose must contain only valid DIDKeyPurpose values.');
-      }
-    });
-
-    this.purpose = purposes;
-  }
-
-  toEntryObj(didId, version=ENTRY_SCHEMA_V100) {
-    let entryObj = super.toEntryObj(didId, version);
-    entryObj['purpose'] = this.purpose;
-    return entryObj;
-  }
 }
 
 module.exports = {
-  DIDKey
+    DIDKey
 };
