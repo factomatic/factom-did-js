@@ -1,4 +1,4 @@
-const { DID } = require('../src/index.js'),
+const { DID } = require('../src/factom-did.js'),
   { Ed25519Key } = require('../src/keys/eddsa'),
   { KeyType, DIDKeyPurpose } = require('../src/enums');
 
