@@ -53,8 +53,7 @@
   "lint-staged": {
     "{src,test,examples}/**/*.js": [
       "eslint --fix",
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ]
   }
 }
