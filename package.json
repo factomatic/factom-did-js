@@ -6,7 +6,8 @@
   "scripts": {
     "build": "webpack",
     "lint": "eslint \"{src,test}/**/*.js\"",
-    "test": "nyc --reporter=html --reporter=text mocha 'test/**/*.spec.js'"
+    "test": "nyc --reporter=html --reporter=text mocha 'test/**/*.spec.js'",
+    "format": "prettier --write \"{src,test}/**/*.js\""
   },
   "author": "Peter Asenov",
   "license": "MIT",
