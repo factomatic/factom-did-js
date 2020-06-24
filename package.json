@@ -1,6 +1,6 @@
 {
   "name": "factom-did-js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "factom-did-js is a JavaScript library for working with DIDs on the Factom blockchain.",
   "main": "src/index.js",
   "scripts": {
