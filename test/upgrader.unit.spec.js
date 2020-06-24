@@ -7,7 +7,10 @@ const { assert, expect } = require('chai').use(require('chai-bytes')),
     { Network, EntryType, KeyType, DIDKeyPurpose } = require('../src/enums');
 
 const didId = `${DID_METHOD_NAME}:${Network.Mainnet}:db4549470d24534fac28569d0f9c65b5ecef8d6332bc788b4d1b8dc1c2dae13a`;
-const managementKeys = [new ManagementKey('my-first-mgmt-key', 0, KeyType.ECDSA, didId)];
+const managementKeys = [
+    new ManagementKey('my-first-mgmt-key', 0, KeyType.ECDSA, didId),
+    new ManagementKey('my-second-mgmt-key', 1, KeyType.RSA, didId)
+];
 const didKeys = [new DIDKey('did-key-1', DIDKeyPurpose.AuthenticationKey, KeyType.EdDSA, didId)];
 
 describe('Test DID Version Upgrader', function() {
