@@ -1,8 +1,14 @@
 {
   "name": "factom-did",
-  "version": "0.1.1",
+  "version": "0.1.5",
   "description": "factom-did is a JavaScript library for working with DIDs on the Factom blockchain.",
   "main": "src/factom-did.js",
+  "module": "dist/factom-did.js",
+  "files": [
+    "src/*",
+    "test/*",
+    "dist/*"
+  ],
   "scripts": {
     "build": "webpack",
     "lint": "eslint \"{src,test}/**/*.js\"",
@@ -11,6 +17,9 @@
     "format": "prettier --write \"{src,test,examples}/**/*.js\""
   },
   "author": "Peter Asenov",
+  "contributors": [
+    "Valentin Ganev"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
