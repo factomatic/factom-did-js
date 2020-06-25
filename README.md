@@ -2,7 +2,7 @@
 
 `factom-did` is a JavaScript library for working with DIDs on the Factom blockchain. It is an implementation
 of the [Factom DID method
-specification](https://github.com/bi-foundation/FIS/blob/feature/DID/FIS/DID.md)
+specification](https://github.com/bi-foundation/FIS/blob/feature/DID/FIS/DID.md).
 
 The library enables:
 
