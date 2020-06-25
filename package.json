@@ -12,6 +12,7 @@
     "format": "prettier --write \"{src,test,examples}/**/*.js\""
   },
   "author": "Peter Asenov",
+  "contributors": ["Valentin Ganev"],
   "license": "MIT",
   "repository": {
     "type": "git",
