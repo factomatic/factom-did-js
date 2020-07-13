@@ -40,6 +40,7 @@
     "@babel/runtime": "^7.8.7",
     "babel-loader": "^8.0.6",
     "chai": "^4.2.0",
+    "chai-bytes": "^0.1.2",
     "eslint": "^6.8.0",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.11",
@@ -51,7 +52,6 @@
   },
   "dependencies": {
     "bs58": "^4.0.1",
-    "chai-bytes": "^0.1.2",
     "elliptic": "^6.5.2",
     "tweetnacl": "^1.0.3"
   },
