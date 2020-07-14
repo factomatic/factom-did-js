@@ -1,14 +1,15 @@
-const { ECDSASecp256k1Key } = require('./ecdsa'),
-    { Ed25519Key } = require('./eddsa'),
-    { ENTRY_SCHEMA_V100 } = require('../constants'),
-    { KeyType } = require('../enums'),
-    { RSAKey } = require('./rsa'),
-    {
-        isValidDIDId,
-        validateAlias,
-        validateKeyType,
-        validatePriorityRequirement
-    } = require('../validators');
+import { ECDSASecp256k1Key } from './ecdsa';
+import { Ed25519Key } from './eddsa';
+import { RSAKey } from './rsa';
+import { ENTRY_SCHEMA_V100 } from '../constants';
+import { KeyEntryObject } from '../interfaces/KeyEntryObject';
+import { KeyType } from '../enums';
+import {
+    isValidDIDId,
+    validateAlias,
+    validateKeyType,
+    validatePriorityRequirement,
+} from '../validators';
 
 /**
  * Class representing the common fields and functionality in a ManagementKey and a DIDKey.
@@ -20,8 +21,21 @@ const { ECDSASecp256k1Key } = require('./ecdsa'),
  * @property {string | Buffer} [publicKey] - A public key.
  * @property {string | Buffer} [privateKey] - A private key.
  */
-class AbstractDIDKey {
-    constructor(alias, keyType, controller, priorityRequirement, publicKey, privateKey) {
+export class AbstractDIDKey {
+    public alias: string;
+    public keyType: KeyType;
+    public controller: string;
+    public priorityRequirement: number | undefined;
+    private _underlyingKey: Ed25519Key | ECDSASecp256k1Key | RSAKey | any;
+
+    constructor(
+        alias: string,
+        keyType: KeyType,
+        controller: string,
+        priorityRequirement?: number,
+        publicKey?: string | Buffer,
+        privateKey?: string | Buffer
+    ) {
         this._validateInputParams(alias, keyType, controller, priorityRequirement);
 
         this.alias = alias;
@@ -29,29 +43,29 @@ class AbstractDIDKey {
         this.controller = controller;
         this.priorityRequirement = priorityRequirement;
 
-        if (this.keyType == KeyType.EdDSA) {
-            this.underlyingKey = new Ed25519Key(publicKey, privateKey);
-        } else if (this.keyType == KeyType.ECDSA) {
-            this.underlyingKey = new ECDSASecp256k1Key(publicKey, privateKey);
+        if (this.keyType === KeyType.EdDSA) {
+            this._underlyingKey = new Ed25519Key(publicKey, privateKey);
+        } else if (this.keyType === KeyType.ECDSA) {
+            this._underlyingKey = new ECDSASecp256k1Key(publicKey, privateKey);
         } else {
-            this.underlyingKey = new RSAKey(publicKey, privateKey);
+            this._underlyingKey = new RSAKey(publicKey as string, privateKey as string);
         }
     }
 
-    get publicKey() {
-        return this.underlyingKey.publicKey;
+    get publicKey(): string | undefined {
+        return this._underlyingKey.publicKey;
     }
 
-    get privateKey() {
-        return this.underlyingKey.privateKey;
+    get privateKey(): string | undefined {
+        return this._underlyingKey.privateKey;
     }
 
-    get verifyingKey() {
-        return this.underlyingKey.verifyingKey;
+    get verifyingKey(): Buffer | Uint8Array | string | undefined {
+        return this._underlyingKey.verifyingKey;
     }
 
-    get signingKey() {
-        return this.underlyingKey.signingKey;
+    get signingKey(): Buffer | Uint8Array | string | undefined {
+        return this._underlyingKey.signingKey;
     }
 
     /**
@@ -59,8 +73,8 @@ class AbstractDIDKey {
      * @param {string | Buffer} message - The message to sign.
      * @returns {Uint8Array | Buffer} - The bytes of the signature.
      */
-    sign(message) {
-        return this.underlyingKey.sign(message);
+    sign(message: string | Buffer): Buffer | Uint8Array {
+        return this._underlyingKey.sign(message);
     }
 
     /**
@@ -69,30 +83,30 @@ class AbstractDIDKey {
      * @param {Buffer | Uint8Array} signature - The signature to verify.
      * @returns {boolean} - True if the signature is successfully verified, False otherwise.
      */
-    verify(message, signature) {
-        return this.underlyingKey.verify(message, signature);
+    verify(message: string | Buffer, signature: Buffer | Uint8Array): boolean {
+        return this._underlyingKey.verify(message, signature);
     }
 
     /**
      * Builds an object suitable for recording on-chain.
      * @param {string} didId - The DID with which this key is associated. Note that this can be different from the key controller.
      * @param {string} version - The entry schema version
-     * @returns {Object} An object with `id`, `type`, `controller` and an optional `priorityRequirement` properties. In addition to
+     * @returns {EntryObject} An entry object with `id`, `type`, `controller` and an optional `priorityRequirement` properties. In addition to
      *   those, there is one extra property for the public key: if the selected signature type is SignatureType.RSA,
      *   then this property is called `publicKeyPem`, otherwise it is called `publicKeyBase58`.
      */
     /* istanbul ignore next */
-    toEntryObj(didId, version = ENTRY_SCHEMA_V100) {
-        if (version == ENTRY_SCHEMA_V100) {
-            let entryObj = {
+    toEntryObj(didId: string, version: string = ENTRY_SCHEMA_V100): KeyEntryObject {
+        if (version === ENTRY_SCHEMA_V100) {
+            const entryObj: KeyEntryObject = {
                 id: this.fullId(didId),
                 type: this.keyType,
                 controller: this.controller,
-                [this.underlyingKey.ON_CHAIN_PUB_KEY_NAME]: this.underlyingKey.publicKey
+                [this._underlyingKey.ON_CHAIN_PUB_KEY_NAME]: this._underlyingKey.publicKey,
             };
 
             if (this.priorityRequirement !== undefined) {
-                entryObj['priorityRequirement'] = this.priorityRequirement;
+                entryObj.priorityRequirement = this.priorityRequirement;
             }
 
             return entryObj;
@@ -104,12 +118,12 @@ class AbstractDIDKey {
     /**
      * Generates new key pair for the key.
      */
-    rotate() {
+    rotate(): void {
         if (!this.signingKey) {
             throw new Error('Private key must be set.');
         }
 
-        this.underlyingKey = new this.underlyingKey.constructor();
+        this._underlyingKey = new this._underlyingKey.constructor();
     }
 
     /**
@@ -117,11 +131,16 @@ class AbstractDIDKey {
      * @param {string} didId
      * @returns {string}
      */
-    fullId(didId) {
+    fullId(didId: string): string {
         return `${didId}#${this.alias}`;
     }
 
-    _validateInputParams(alias, keyType, controller, priorityRequirement) {
+    private _validateInputParams(
+        alias: string,
+        keyType: KeyType,
+        controller: string,
+        priorityRequirement: number | undefined
+    ): void {
         validateAlias(alias);
         validateKeyType(keyType);
 
@@ -132,7 +151,3 @@ class AbstractDIDKey {
         validatePriorityRequirement(priorityRequirement);
     }
 }
-
-module.exports = {
-    AbstractDIDKey
-};

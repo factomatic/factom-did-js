@@ -1,17 +1,22 @@
-const crypto = require('crypto');
+import { createHash } from 'crypto';
 
 /**
  * Calculates chain id by hashing each ExtID, joining the hashes into a byte array and hashing the array.
  * @param {Array} extIds - A list of ExtIDs.
+ * @returns {string} - Calculated chain id.
  */
-function calculateChainId(extIds) {
-    const extIdsHashBytes = extIds.reduce(function(total, currentExtId) {
-        const extIdHash = crypto.createHash('sha256');
+export function calculateChainId(extIds: Array<string | Buffer>): string {
+    const extIdsHashBytes = extIds.reduce(function (
+        total: Uint8Array,
+        currentExtId: string | Buffer
+    ) {
+        const extIdHash = createHash('sha256');
         extIdHash.update(currentExtId);
         return Buffer.concat([total, extIdHash.digest()]);
-    }, Buffer.from([]));
+    },
+    Buffer.from([]));
 
-    const fullHash = crypto.createHash('sha256');
+    const fullHash = createHash('sha256');
     fullHash.update(extIdsHashBytes);
 
     return fullHash.digest('hex');
@@ -21,21 +26,17 @@ function calculateChainId(extIds) {
  * Calculates entry size in bytes.
  * @param {Buffer[]} extIds
  * @param {Buffer} content
+ * @returns {number} - Entry size.
  */
-function calculateEntrySize(extIds, content) {
+export function calculateEntrySize(extIds: Buffer[], content: Buffer): number {
     let totalEntrySize = 0;
     const fixedHeaderSize = 35;
     totalEntrySize += fixedHeaderSize + 2 * extIds.length;
     totalEntrySize += content.byteLength;
 
-    extIds.forEach(extId => {
+    extIds.forEach((extId) => {
         totalEntrySize += extId.byteLength;
     });
 
     return totalEntrySize;
 }
-
-module.exports = {
-    calculateChainId,
-    calculateEntrySize
-};

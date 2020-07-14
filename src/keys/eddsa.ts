@@ -1,15 +1,21 @@
-const base58 = require('bs58'),
-    { createHash } = require('crypto'),
-    nacl = require('tweetnacl/nacl-fast');
+import { createHash } from 'crypto';
+import { encode, decode } from 'bs58';
+import { sign } from 'tweetnacl/nacl';
 
 /**
  * Representation of an Ed25519 key. Instances of this class allow signing of messages and signature verification, as
  * well as key creation and derivation of a public key from a private key.
- * @param {string | Buffer} publicKey - An optional base58 encoded publicKey or Buffer.
- * @param {string | Buffer} [privateKey] - An optional base58 encoded privateKey or Buffer.
+ * @param {string | Buffer | Uint8Array} [publicKey] - An optional base58 encoded publicKey or Buffer.
+ * @param {string | Buffer | Uint8Array} [privateKey] - An optional base58 encoded privateKey or Buffer.
  */
-class Ed25519Key {
-    constructor(publicKey, privateKey) {
+export class Ed25519Key {
+    public verifyingKey!: Uint8Array;
+    public signingKey: Uint8Array | undefined;
+
+    constructor(
+        publicKey?: string | Buffer | Uint8Array,
+        privateKey?: string | Buffer | Uint8Array
+    ) {
         if (!publicKey && !privateKey) {
             this._generateNewKeyPair();
             return;
@@ -26,17 +32,17 @@ class Ed25519Key {
         this._deriveSigningAndVerifyingKey(publicKey, privateKey);
     }
 
-    get ON_CHAIN_PUB_KEY_NAME() {
+    get ON_CHAIN_PUB_KEY_NAME(): string {
         return 'publicKeyBase58';
     }
 
-    get publicKey() {
-        return base58.encode(this.verifyingKey);
+    get publicKey(): string {
+        return encode(Buffer.from(this.verifyingKey));
     }
 
-    get privateKey() {
+    get privateKey(): string | undefined {
         if (this.signingKey) {
-            return base58.encode(this.signingKey);
+            return encode(Buffer.from(this.signingKey));
         } else {
             return undefined;
         }
@@ -47,7 +53,7 @@ class Ed25519Key {
      * @param {string | Buffer} message - The message to sign.
      * @returns {Uint8Array} - The bytes of the signature.
      */
-    sign(message) {
+    sign(message: string | Buffer): Uint8Array {
         if (!this.signingKey) {
             throw new Error('Private key is not set.');
         }
@@ -58,7 +64,7 @@ class Ed25519Key {
 
         const sha256Hash = createHash('sha256');
         sha256Hash.update(message);
-        return nacl.sign.detached(sha256Hash.digest(), this.signingKey);
+        return sign.detached(sha256Hash.digest(), this.signingKey);
     }
 
     /**
@@ -67,36 +73,48 @@ class Ed25519Key {
      * @param {Buffer | Uint8Array} signature - The signature to verify.
      * @returns {boolean} - True if the signature is successfully verified, False otherwise.
      */
-    verify(message, signature) {
+    verify(message: string | Buffer, signature: Buffer | Uint8Array): boolean {
         if (typeof message !== 'string' && !Buffer.isBuffer(message)) {
             throw new Error('Message must be a string or Buffer.');
         }
 
         const sha256Hash = createHash('sha256');
         sha256Hash.update(message);
-        return nacl.sign.detached.verify(sha256Hash.digest(), signature, this.verifyingKey);
+        return sign.detached.verify(sha256Hash.digest(), signature, this.verifyingKey);
     }
 
-    _generateNewKeyPair() {
-        const keyPair = nacl.sign.keyPair();
+    private _generateNewKeyPair(): void {
+        const keyPair = sign.keyPair();
 
         this.verifyingKey = keyPair.publicKey;
         this.signingKey = keyPair.secretKey;
     }
 
-    _deriveSigningAndVerifyingKey(publicKey, privateKey) {
-        if (publicKey && typeof publicKey == 'string') {
-            publicKey = base58.decode(publicKey);
+    private _deriveSigningAndVerifyingKey(
+        publicKey?: string | Buffer | Uint8Array,
+        privateKey?: string | Buffer | Uint8Array
+    ): void {
+        let publicKeyBuffer: Buffer | Uint8Array;
+        if (publicKey && typeof publicKey === 'string') {
+            publicKeyBuffer = decode(publicKey);
+        } else {
+            publicKeyBuffer = publicKey as Buffer;
         }
 
         if (privateKey) {
-            if (typeof privateKey == 'string') {
-                privateKey = base58.decode(privateKey);
+            let privateKeyBuffer: Buffer | Uint8Array;
+            if (typeof privateKey === 'string') {
+                privateKeyBuffer = decode(privateKey);
+            } else {
+                privateKeyBuffer = privateKey;
             }
 
-            const keyPair = nacl.sign.keyPair.fromSecretKey(privateKey);
+            const keyPair = sign.keyPair.fromSecretKey(privateKeyBuffer);
 
-            if (publicKey && Buffer.compare(keyPair.publicKey, publicKey) !== 0) {
+            if (
+                publicKey &&
+                Buffer.compare(Buffer.from(keyPair.publicKey), Buffer.from(publicKeyBuffer)) !== 0
+            ) {
                 throw new Error(
                     'The provided public key does not match the one derived from the provided private key.'
                 );
@@ -105,15 +123,11 @@ class Ed25519Key {
             this.verifyingKey = keyPair.publicKey;
             this.signingKey = keyPair.secretKey;
         } else {
-            if (publicKey.length !== 32) {
+            if (publicKeyBuffer.length !== 32) {
                 throw new Error('Invalid Ed25519 public key. Must be a 32-byte value.');
             }
 
-            this.verifyingKey = publicKey;
+            this.verifyingKey = publicKeyBuffer;
         }
     }
 }
-
-module.exports = {
-    Ed25519Key
-};

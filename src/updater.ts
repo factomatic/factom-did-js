@@ -1,42 +1,51 @@
-const { calculateEntrySize } = require('./blockchain'),
-    { createHash } = require('crypto'),
-    { DIDKey } = require('./keys/did'),
-    { DIDKeyPurpose, EntryType, KeyType } = require('./enums'),
-    { ENTRY_SCHEMA_V100, ENTRY_SIZE_LIMIT } = require('./constants'),
-    { ManagementKey } = require('./keys/management');
+import { calculateEntrySize } from './blockchain';
+import { createHash } from 'crypto';
+import { DIDBuilder } from './did';
+import { DIDKey } from './keys/did';
+import { DIDKeyPurpose, EntryType, KeyType } from './enums';
+import { EntryData } from './interfaces/EntryData';
+import { ENTRY_SCHEMA_V100, ENTRY_SIZE_LIMIT } from './constants';
+import { ManagementKey } from './keys/management';
+import { Service } from './service';
 
 /**
  * Facilitates the creation of an update entry for an existing DID.
  * Provides support for adding and revoking management keys, DID keys and services.
  * @param {DIDBuilder} didBuilder
  */
-class DIDUpdater {
-    constructor(didBuilder) {
-        this.didBuilder = didBuilder;
-        this.originalManagementKeys = [...this.didBuilder._managementKeys];
-        this.originalDIDKeys = [...this.didBuilder._didKeys];
-        this.originalServices = [...this.didBuilder._services];
-        this.didKeyPurposesToRevoke = {};
+export class DIDUpdater {
+    private _didBuilder: DIDBuilder;
+    private _originalManagementKeys: ManagementKey[];
+    private _originalDIDKeys: DIDKey[];
+    private _originalServices: Service[];
+    private _didKeyPurposesToRevoke: any;
+
+    constructor(didBuilder: DIDBuilder) {
+        this._didBuilder = didBuilder;
+        this._originalManagementKeys = [...this._didBuilder.managementKeys];
+        this._originalDIDKeys = [...this._didBuilder.didKeys];
+        this._originalServices = [...this._didBuilder.services];
+        this._didKeyPurposesToRevoke = {};
     }
 
     /**
      * @returns {ManagementKey[]} The current state of management keys.
      */
-    get managementKeys() {
-        return this.didBuilder._managementKeys;
+    get managementKeys(): ManagementKey[] {
+        return this._didBuilder.managementKeys;
     }
 
     /**
      * @returns {DIDKey[]} The current state of DID keys.
      */
-    get didKeys() {
+    get didKeys(): DIDKey[] {
         /** Apply revocation of DID key purposes */
-        let didKeys = [];
-        this.didBuilder._didKeys.forEach(key => {
+        const didKeys: DIDKey[] = [];
+        this._didBuilder.didKeys.forEach((key) => {
             let revoked = false;
-            Object.keys(this.didKeyPurposesToRevoke).forEach(alias => {
+            Object.keys(this._didKeyPurposesToRevoke).forEach((alias) => {
                 if (alias === key.alias) {
-                    const revokedPurpose = this.didKeyPurposesToRevoke[alias];
+                    const revokedPurpose = this._didKeyPurposesToRevoke[alias];
                     const remainingPurpose =
                         revokedPurpose === DIDKeyPurpose.PublicKey
                             ? DIDKeyPurpose.AuthenticationKey
@@ -69,8 +78,8 @@ class DIDUpdater {
     /**
      * @returns {Services[]} The current state of services.
      */
-    get services() {
-        return this.didBuilder._services;
+    get services(): Service[] {
+        return this._didBuilder.services;
     }
 
     /**
@@ -82,8 +91,14 @@ class DIDUpdater {
      * @param {number} [priorityRequirement]
      * @returns {DIDUpdater} - DIDUpdater instance.
      */
-    addManagementKey(alias, priority, keyType = KeyType.EdDSA, controller, priorityRequirement) {
-        this.didBuilder.managementKey(alias, priority, keyType, controller, priorityRequirement);
+    addManagementKey(
+        alias: string,
+        priority: number,
+        keyType: KeyType = KeyType.EdDSA,
+        controller?: string,
+        priorityRequirement?: number
+    ): this {
+        this._didBuilder.managementKey(alias, priority, keyType, controller, priorityRequirement);
         return this;
     }
 
@@ -96,8 +111,14 @@ class DIDUpdater {
      * @param {number} [priorityRequirement]
      * @returns {DIDUpdater} - DIDUpdater instance.
      */
-    addDIDKey(alias, purpose, keyType = KeyType.EdDSA, controller, priorityRequirement) {
-        this.didBuilder.didKey(alias, purpose, keyType, controller, priorityRequirement);
+    addDIDKey(
+        alias: string,
+        purpose: DIDKeyPurpose | DIDKeyPurpose[],
+        keyType: KeyType = KeyType.EdDSA,
+        controller?: string,
+        priorityRequirement?: number
+    ): this {
+        this._didBuilder.didKey(alias, purpose, keyType, controller, priorityRequirement);
         return this;
     }
 
@@ -110,8 +131,14 @@ class DIDUpdater {
      * @param {Object} [customFields]
      * @returns {DIDUpdater}
      */
-    addService(alias, serviceType, endpoint, priorityRequirement, customFields) {
-        this.didBuilder.service(alias, serviceType, endpoint, priorityRequirement, customFields);
+    addService(
+        alias: string,
+        serviceType: string,
+        endpoint: string,
+        priorityRequirement?: number,
+        customFields?: any
+    ): this {
+        this._didBuilder.service(alias, serviceType, endpoint, priorityRequirement, customFields);
         return this;
     }
 
@@ -120,9 +147,9 @@ class DIDUpdater {
      * @param {string} alias - The alias of the key to be revoked
      * @returns {DIDUpdater}
      */
-    revokeManagementKey(alias) {
-        this.didBuilder._managementKeys = this.didBuilder._managementKeys.filter(
-            k => k.alias !== alias
+    revokeManagementKey(alias: string): this {
+        this._didBuilder.managementKeys = this._didBuilder.managementKeys.filter(
+            (k) => k.alias !== alias
         );
         return this;
     }
@@ -132,8 +159,8 @@ class DIDUpdater {
      * @param {string} alias - The alias of the key to be revoked
      * @returns {DIDUpdater}
      */
-    revokeDIDKey(alias) {
-        this.didBuilder._didKeys = this.didBuilder._didKeys.filter(k => k.alias !== alias);
+    revokeDIDKey(alias: string): this {
+        this._didBuilder.didKeys = this._didBuilder.didKeys.filter((k) => k.alias !== alias);
         return this;
     }
 
@@ -143,12 +170,12 @@ class DIDUpdater {
      * @param {DIDKeyPurpose} purpose - The purpose to revoke
      * @returns {DIDUpdater}
      */
-    revokeDIDKeyPurpose(alias, purpose) {
+    revokeDIDKeyPurpose(alias: string, purpose: DIDKeyPurpose): this {
         if (![DIDKeyPurpose.AuthenticationKey, DIDKeyPurpose.PublicKey].includes(purpose)) {
             return this;
         }
 
-        const didKey = this.didBuilder._didKeys.find(k => k.alias === alias);
+        const didKey = this._didBuilder.didKeys.find((k) => k.alias === alias);
         if (!didKey) {
             return this;
         }
@@ -160,7 +187,7 @@ class DIDUpdater {
         if (didKey.purpose.length === 1) {
             return this.revokeDIDKey(alias);
         } else {
-            this.didKeyPurposesToRevoke[alias] = purpose;
+            this._didKeyPurposesToRevoke[alias] = purpose;
             return this;
         }
     }
@@ -170,8 +197,8 @@ class DIDUpdater {
      * @param {string} alias - The alias of the service to be revoked
      * @returns {DIDUpdater}
      */
-    revokeService(alias) {
-        this.didBuilder._services = this.didBuilder._services.filter(k => k.alias !== alias);
+    revokeService(alias: string): this {
+        this._didBuilder.services = this._didBuilder.services.filter((s) => s.alias !== alias);
         return this;
     }
 
@@ -180,17 +207,17 @@ class DIDUpdater {
      * @param {string} alias - The alias of the management key to be rotated
      * @returns {DIDUpdater}
      */
-    rotateManagementKey(alias) {
-        const managementKey = this.didBuilder._managementKeys.find(k => k.alias === alias);
+    rotateManagementKey(alias: string): this {
+        const managementKey = this._didBuilder.managementKeys.find((k) => k.alias === alias);
         if (managementKey) {
-            this.didBuilder._managementKeys = this.didBuilder._managementKeys.filter(
-                k => k.alias !== alias
+            this._didBuilder.managementKeys = this._didBuilder.managementKeys.filter(
+                (k) => k.alias !== alias
             );
             const managementKeyClone = Object.assign({}, managementKey);
             Object.setPrototypeOf(managementKeyClone, ManagementKey.prototype);
 
             managementKeyClone.rotate();
-            this.didBuilder._managementKeys.push(managementKeyClone);
+            this._didBuilder.managementKeys.push(managementKeyClone);
         }
 
         return this;
@@ -201,48 +228,48 @@ class DIDUpdater {
      * @param {string} alias - The alias of the DID key to be rotated
      * @returns {DIDUpdater}
      */
-    rotateDIDKey(alias) {
-        const didKey = this.didBuilder._didKeys.find(k => k.alias === alias);
+    rotateDIDKey(alias: string): this {
+        const didKey = this._didBuilder.didKeys.find((k) => k.alias === alias);
         if (didKey) {
-            this.didBuilder._didKeys = this.didBuilder._didKeys.filter(k => k.alias !== alias);
+            this._didBuilder.didKeys = this._didBuilder.didKeys.filter((k) => k.alias !== alias);
             const didKeyClone = Object.assign({}, didKey);
             Object.setPrototypeOf(didKeyClone, DIDKey.prototype);
 
             didKeyClone.rotate();
-            this.didBuilder._didKeys.push(didKeyClone);
+            this._didBuilder.didKeys.push(didKeyClone);
         }
 
         return this;
     }
 
-    exportEntryData() {
-        if (!this.didBuilder._managementKeys.some(k => k.priority === 0)) {
+    exportEntryData(): EntryData {
+        if (!this._didBuilder.managementKeys.some((k) => k.priority === 0)) {
             throw new Error('DIDUpdate entry would leave no management keys of priority zero.');
         }
 
         const newMgmtKeysResult = this._getNew(
-            this.originalManagementKeys,
-            this.didBuilder._managementKeys
+            this._originalManagementKeys,
+            this._didBuilder.managementKeys
         );
-        const newDIDKeysResult = this._getNew(this.originalDIDKeys, this.didBuilder._didKeys);
-        const newServicesResult = this._getNew(this.originalServices, this.didBuilder._services);
+        const newDIDKeysResult = this._getNew(this._originalDIDKeys, this._didBuilder.didKeys);
+        const newServicesResult = this._getNew(this._originalServices, this._didBuilder.services);
         const revokedMgmtKeysResult = this._getRevoked(
-            this.originalManagementKeys,
-            this.didBuilder._managementKeys
+            this._originalManagementKeys,
+            this._didBuilder.managementKeys
         );
         const revokedDIDKeysResult = this._getRevoked(
-            this.originalDIDKeys,
-            this.didBuilder._didKeys
+            this._originalDIDKeys,
+            this._didBuilder.didKeys
         );
         const revokedServicesResult = this._getRevoked(
-            this.originalServices,
-            this.didBuilder._services
+            this._originalServices,
+            this._didBuilder.services
         );
 
         const addObject = this._constructAddObject(
-            newMgmtKeysResult.new,
-            newDIDKeysResult.new,
-            newServicesResult.new
+            newMgmtKeysResult.new as ManagementKey[],
+            newDIDKeysResult.new as DIDKey[],
+            newServicesResult.new as Service[]
         );
         const revokeObject = this._constructRevokeObject(
             revokedMgmtKeysResult.revoked,
@@ -250,23 +277,23 @@ class DIDUpdater {
             revokedServicesResult.revoked
         );
 
-        Object.keys(this.didKeyPurposesToRevoke).forEach(alias => {
+        Object.keys(this._didKeyPurposesToRevoke).forEach((alias) => {
             try {
                 revokeObject['didKey'].push({
-                    id: `${this.didBuilder._id}#${alias}`,
-                    purpose: [this.didKeyPurposesToRevoke[alias]]
+                    id: `${this._didBuilder.id}#${alias}`,
+                    purpose: [this._didKeyPurposesToRevoke[alias]],
                 });
             } catch (e) {
                 revokeObject['didKey'] = [
                     {
-                        id: `${this.didBuilder._id}#${alias}`,
-                        purpose: [this.didKeyPurposesToRevoke[alias]]
-                    }
+                        id: `${this._didBuilder.id}#${alias}`,
+                        purpose: [this._didKeyPurposesToRevoke[alias]],
+                    },
                 ];
             }
         });
 
-        const updateEntryContent = {};
+        const updateEntryContent: any = {};
         if (Object.keys(addObject).length > 0) {
             updateEntryContent['add'] = addObject;
         }
@@ -279,25 +306,26 @@ class DIDUpdater {
             throw new Error('The are no changes made to the DID.');
         }
 
-        const signingKey = this.originalManagementKeys.sort((a, b) => a.priority - b.priority)[0];
+        const signingKey = this._originalManagementKeys.sort((a, b) => a.priority - b.priority)[0];
 
-        /** Currently unreachable code!
-        const updateKeyRequiredPriority = Math.min(
-            newMgmtKeysResult.requiredPriorityForUpdate,
-            revokedMgmtKeysResult.requiredPriorityForUpdate,
-            revokedDIDKeysResult.requiredPriorityForUpdate,
-            revokedServicesResult.requiredPriorityForUpdate
-        );
+        /**
+         *  Currently unreachable code!
+         *  const updateKeyRequiredPriority = Math.min(
+         *      newMgmtKeysResult.requiredPriorityForUpdate,
+         *      revokedMgmtKeysResult.requiredPriorityForUpdate,
+         *      revokedDIDKeysResult.requiredPriorityForUpdate,
+         *      revokedServicesResult.requiredPriorityForUpdate
+         *  );
+         *
+         *  if (signingKey.priority > updateKeyRequiredPriority) {
+         *    throw new Error(
+         *      `The update requires a key with priority <= ${updateKeyRequiredPriority}, but the highest priority
+         *      key available is with priority ${signingKey.priority}`
+         *    );
+         *  }
+         */
 
-        if (signingKey.priority > updateKeyRequiredPriority) {
-          throw new Error(
-            `The update requires a key with priority <= ${updateKeyRequiredPriority}, but the highest priority
-            key available is with priority ${signingKey.priority}`
-          );
-        }
-        */
-
-        const signingKeyId = signingKey.fullId(this.didBuilder._id);
+        const signingKeyId = signingKey.fullId(this._didBuilder.id);
         const entryContent = JSON.stringify(updateEntryContent);
         const dataToSign = ''.concat(
             EntryType.Update,
@@ -314,7 +342,7 @@ class DIDUpdater {
             Buffer.from(EntryType.Update),
             Buffer.from(ENTRY_SCHEMA_V100),
             Buffer.from(signingKeyId),
-            Buffer.from(signature)
+            Buffer.from(signature),
         ];
 
         const entrySize = calculateEntrySize(extIds, Buffer.from(entryContent));
@@ -325,14 +353,14 @@ class DIDUpdater {
         return { extIds, content: Buffer.from(entryContent) };
     }
 
-    _getNew(original, current) {
-        let _new = [];
+    private _getNew(original: any[], current: any[]) {
+        const _new: any[] = [];
         let requiredPriorityForUpdate = Number.POSITIVE_INFINITY;
-        const originalStrArray = original.map(e => JSON.stringify(e));
+        const originalStrArray = original.map((e) => JSON.stringify(e));
 
-        current.forEach(obj => {
+        current.forEach((obj) => {
             if (!originalStrArray.includes(JSON.stringify(obj))) {
-                _new.push(obj.toEntryObj(this.didBuilder._id));
+                _new.push(obj.toEntryObj(this._didBuilder.id));
 
                 if (obj.priority && obj.priority < requiredPriorityForUpdate) {
                     requiredPriorityForUpdate = obj.priority;
@@ -343,14 +371,14 @@ class DIDUpdater {
         return { new: _new, requiredPriorityForUpdate };
     }
 
-    _getRevoked(original, current) {
-        let revoked = [];
+    private _getRevoked(original: any[], current: any[]) {
+        const revoked: any[] = [];
         let requiredPriorityForUpdate = Number.POSITIVE_INFINITY;
-        const currentStrArray = current.map(e => JSON.stringify(e));
+        const currentStrArray = current.map((e) => JSON.stringify(e));
 
-        original.forEach(obj => {
+        original.forEach((obj) => {
             if (!currentStrArray.includes(JSON.stringify(obj))) {
-                revoked.push({ id: `${this.didBuilder._id}#${obj.alias}` });
+                revoked.push({ id: `${this._didBuilder.id}#${obj.alias}` });
 
                 if (
                     obj.priorityRequirement &&
@@ -372,8 +400,12 @@ class DIDUpdater {
         return { revoked, requiredPriorityForUpdate };
     }
 
-    _constructAddObject(newManagementKeys, newDidKeys, newServices) {
-        const add = {};
+    private _constructAddObject(
+        newManagementKeys: ManagementKey[],
+        newDidKeys: DIDKey[],
+        newServices: Service[]
+    ) {
+        const add: any = {};
 
         if (newManagementKeys.length > 0) {
             add['managementKey'] = newManagementKeys;
@@ -390,8 +422,12 @@ class DIDUpdater {
         return add;
     }
 
-    _constructRevokeObject(revokedManagementKeys, revokedDidKeys, revokedServices) {
-        const revoke = {};
+    private _constructRevokeObject(
+        revokedManagementKeys: any[],
+        revokedDidKeys: any[],
+        revokedServices: any[]
+    ) {
+        const revoke: any = {};
 
         if (revokedManagementKeys.length > 0) {
             revoke['managementKey'] = revokedManagementKeys;
@@ -408,7 +444,3 @@ class DIDUpdater {
         return revoke;
     }
 }
-
-module.exports = {
-    DIDUpdater
-};

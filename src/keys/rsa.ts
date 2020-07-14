@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+import { createVerify, createSign, generateKeyPairSync } from 'crypto';
 
 /**
  * Representation of an RSA key. Instances of this class allow signing of messages and signature verification, as
@@ -6,8 +6,11 @@ const crypto = require('crypto');
  * @param {string} [publicKey] - PEM encoded public key.
  * @param {string} [privateKey] - PEM encoded private key.
  */
-class RSAKey {
-    constructor(publicKey, privateKey) {
+export class RSAKey {
+    public verifyingKey: string | undefined;
+    public signingKey: string | undefined;
+
+    constructor(publicKey?: string, privateKey?: string) {
         if (!publicKey && !privateKey) {
             this._generateNewKeyPair();
             return;
@@ -25,15 +28,15 @@ class RSAKey {
         this.signingKey = privateKey;
     }
 
-    get ON_CHAIN_PUB_KEY_NAME() {
+    get ON_CHAIN_PUB_KEY_NAME(): string {
         return 'publicKeyPem';
     }
 
-    get publicKey() {
+    get publicKey(): string | undefined {
         return this.verifyingKey;
     }
 
-    get privateKey() {
+    get privateKey(): string | undefined {
         return this.signingKey;
     }
 
@@ -42,7 +45,7 @@ class RSAKey {
      * @param {string | Buffer} message - The message to sign.
      * @returns {Buffer} - The bytes of the signature.
      */
-    sign(message) {
+    sign(message: string | Buffer): Buffer {
         if (!this.signingKey) {
             throw new Error('Private key is not set.');
         }
@@ -51,7 +54,7 @@ class RSAKey {
             throw new Error('Message must be a string or Buffer.');
         }
 
-        const sign = crypto.createSign('SHA256');
+        const sign = createSign('SHA256');
         sign.update(message);
         sign.end();
         return sign.sign(this.signingKey);
@@ -63,7 +66,7 @@ class RSAKey {
      * @param {Buffer | Uint8Array} signature - The signature to verify.
      * @returns {boolean} - True if the signature is successfully verified, False otherwise.
      */
-    verify(message, signature) {
+    verify(message: string | Buffer, signature: Buffer | Uint8Array): boolean {
         if (!this.verifyingKey) {
             throw new Error('Public key is not set.');
         }
@@ -72,30 +75,26 @@ class RSAKey {
             throw new Error('Message must be a string or Buffer.');
         }
 
-        const verify = crypto.createVerify('SHA256');
+        const verify = createVerify('SHA256');
         verify.update(message);
         verify.end();
         return verify.verify(this.verifyingKey, signature);
     }
 
-    _generateNewKeyPair() {
-        const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+    private _generateNewKeyPair(): void {
+        const { publicKey, privateKey } = generateKeyPairSync('rsa', {
             modulusLength: 2048,
             publicKeyEncoding: {
                 type: 'spki',
-                format: 'pem'
+                format: 'pem',
             },
             privateKeyEncoding: {
                 type: 'pkcs8',
-                format: 'pem'
-            }
+                format: 'pem',
+            },
         });
 
         this.verifyingKey = publicKey;
         this.signingKey = privateKey;
     }
 }
-
-module.exports = {
-    RSAKey
-};

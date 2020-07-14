@@ -1,6 +1,6 @@
-const { AbstractDIDKey } = require('./abstract'),
-    { DIDKeyPurpose } = require('../enums'),
-    { ENTRY_SCHEMA_V100 } = require('../constants');
+import { AbstractDIDKey } from './abstract';
+import { DIDKeyPurpose, KeyType } from '../enums';
+import { KeyEntryObject } from '../interfaces/KeyEntryObject';
 
 /**
  * Application-level key, which can be used for authentication, signing requests, encryption, decryption, etc.
@@ -13,14 +13,24 @@ const { AbstractDIDKey } = require('./abstract'),
  * @property {string | Buffer} [publicKey] - A public key.
  * @property {string | Buffer} [privateKey] - A private key.
  */
-class DIDKey extends AbstractDIDKey {
-    constructor(alias, purpose, keyType, controller, priorityRequirement, publicKey, privateKey) {
+export class DIDKey extends AbstractDIDKey {
+    public purpose: DIDKeyPurpose[];
+
+    constructor(
+        alias: string,
+        purpose: DIDKeyPurpose | DIDKeyPurpose[],
+        keyType: KeyType,
+        controller: string,
+        priorityRequirement?: number,
+        publicKey?: string | Buffer,
+        privateKey?: string | Buffer
+    ) {
         super(alias, keyType, controller, priorityRequirement, publicKey, privateKey);
 
-        let purposes;
+        let purposes: DIDKeyPurpose[];
         if (Array.isArray(purpose)) {
             purposes = purpose;
-        } else if (typeof purpose == 'string') {
+        } else if (typeof purpose === 'string') {
             purposes = [purpose];
         } else {
             throw new Error('Invalid purpose type.');
@@ -35,8 +45,8 @@ class DIDKey extends AbstractDIDKey {
             );
         }
 
-        purposes.forEach(purpose => {
-            if (![DIDKeyPurpose.PublicKey, DIDKeyPurpose.AuthenticationKey].includes(purpose)) {
+        purposes.forEach((p) => {
+            if (![DIDKeyPurpose.PublicKey, DIDKeyPurpose.AuthenticationKey].includes(p)) {
                 throw new Error('Purpose must contain only valid DIDKeyPurpose values.');
             }
         });
@@ -44,13 +54,9 @@ class DIDKey extends AbstractDIDKey {
         this.purpose = purposes;
     }
 
-    toEntryObj(didId, version = ENTRY_SCHEMA_V100) {
-        let entryObj = super.toEntryObj(didId, version);
-        entryObj['purpose'] = this.purpose;
+    toEntryObj(didId: string, version?: string): KeyEntryObject {
+        const entryObj: KeyEntryObject = super.toEntryObj(didId, version);
+        entryObj.purpose = this.purpose;
         return entryObj;
     }
 }
-
-module.exports = {
-    DIDKey
-};

@@ -1,5 +1,6 @@
-const { AbstractDIDKey } = require('./abstract'),
-    { ENTRY_SCHEMA_V100 } = require('../constants');
+import { AbstractDIDKey } from './abstract';
+import { KeyEntryObject } from '../interfaces/KeyEntryObject';
+import { KeyType } from '../enums';
 
 /**
  * A key used to sign updates for an existing DID.
@@ -13,8 +14,18 @@ const { AbstractDIDKey } = require('./abstract'),
  * @property {string | Buffer} [publicKey] - A public key.
  * @property {string | Buffer} [privateKey] - A private key.
  */
-class ManagementKey extends AbstractDIDKey {
-    constructor(alias, priority, keyType, controller, priorityRequirement, publicKey, privateKey) {
+export class ManagementKey extends AbstractDIDKey {
+    public priority: number;
+
+    constructor(
+        alias: string,
+        priority: number,
+        keyType: KeyType,
+        controller: string,
+        priorityRequirement?: number,
+        publicKey?: string | Buffer,
+        privateKey?: string | Buffer
+    ) {
         super(alias, keyType, controller, priorityRequirement, publicKey, privateKey);
 
         if (!Number.isInteger(priority) || priority < 0) {
@@ -24,13 +35,9 @@ class ManagementKey extends AbstractDIDKey {
         this.priority = priority;
     }
 
-    toEntryObj(didId, version = ENTRY_SCHEMA_V100) {
-        let entryObj = super.toEntryObj(didId, version);
-        entryObj['priority'] = this.priority;
+    toEntryObj(didId: string, version?: string): KeyEntryObject {
+        const entryObj: KeyEntryObject = super.toEntryObj(didId, version);
+        entryObj.priority = this.priority;
         return entryObj;
     }
 }
-
-module.exports = {
-    ManagementKey
-};

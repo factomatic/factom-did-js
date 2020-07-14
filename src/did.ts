@@ -1,34 +1,44 @@
-const crypto = require('crypto'),
-    { calculateChainId, calculateEntrySize } = require('./blockchain'),
-    { DIDDeactivator } = require('./deactivator'),
-    { DIDVersionUpgrader } = require('./upgrader'),
-    { DIDUpdater } = require('./updater'),
-    {
-        DID_METHOD_SPEC_V020,
-        DID_METHOD_NAME,
-        ENTRY_SCHEMA_V100,
-        ENTRY_SIZE_LIMIT
-    } = require('./constants'),
-    { DIDKey } = require('./keys/did'),
-    { ManagementKey } = require('./keys/management'),
-    { Network, KeyType, EntryType } = require('./enums'),
-    { Service } = require('./service'),
-    { isValidDIDId } = require('./validators');
+import { calculateChainId, calculateEntrySize } from './blockchain';
+import { DIDDocument } from './interfaces/DIDDocument';
+import { DIDDeactivator } from './deactivator';
+import { DIDVersionUpgrader } from './upgrader';
+import { DIDUpdater } from './updater';
+import { DIDKey } from './keys/did';
+import { EntryData } from './interfaces/EntryData';
+import { isValidDIDId } from './validators';
+import { ManagementKey } from './keys/management';
+import { Network, KeyType, EntryType, DIDKeyPurpose } from './enums';
+import { randomBytes } from 'crypto';
+import { Service } from './service';
+import {
+    DID_METHOD_SPEC_V020,
+    DID_METHOD_NAME,
+    ENTRY_SCHEMA_V100,
+    ENTRY_SIZE_LIMIT,
+} from './constants';
 
 /**
  * Class that allows exporting of the constructed DID into a format suitable for recording on the Factom blockchain.
  * @param {DIDBuilder} builder
  */
-class DID {
-    constructor(builder) {
+export class DID {
+    readonly id: string;
+    readonly nonce: Buffer | undefined;
+    readonly network: Network;
+    readonly specVersion: string | undefined;
+    readonly managementKeys: readonly ManagementKey[];
+    readonly didKeys: readonly DIDKey[];
+    readonly services: readonly Service[];
+
+    constructor(builder: DIDBuilder) {
         if (builder instanceof DIDBuilder) {
-            this.id = builder._id;
-            this.nonce = builder._nonce;
-            this.network = builder._network;
-            this.specVersion = builder._specVersion;
-            this.managementKeys = Object.freeze(builder._managementKeys);
-            this.didKeys = Object.freeze(builder._didKeys);
-            this.services = Object.freeze(builder._services);
+            this.id = builder.id;
+            this.nonce = builder.nonce;
+            this.network = builder.network;
+            this.specVersion = builder.specVersion;
+            this.managementKeys = Object.freeze(builder.managementKeys);
+            this.didKeys = Object.freeze(builder.didKeys);
+            this.services = Object.freeze(builder.services);
             Object.freeze(this);
         } else {
             throw new Error('Use `DID.builder()` syntax to create a new DID');
@@ -37,22 +47,22 @@ class DID {
 
     /**
      * Exports content that can be recorded on-chain to create the DID.
-     * @returns {Object} An object containing the ExtIDs and the entry content.
+     * @returns {EntryData} An object containing the ExtIDs and the entry content.
      */
-    exportEntryData() {
+    exportEntryData(): EntryData {
         if (this.managementKeys.length < 1) {
             throw new Error('The DID must have at least one management key.');
         }
 
-        if (!this.managementKeys.some(mk => mk.priority === 0)) {
+        if (!this.managementKeys.some((mk) => mk.priority === 0)) {
             throw new Error('At least one management key must have priority 0.');
         }
 
         const content = Buffer.from(JSON.stringify(this._buildDIDDocument()), 'utf-8');
-        const extIds = [
+        const extIds: Buffer[] = [
             Buffer.from(EntryType.Create, 'utf-8'),
             Buffer.from(ENTRY_SCHEMA_V100, 'utf-8'),
-            this.nonce
+            this.nonce as Buffer,
         ];
 
         const entrySize = calculateEntrySize(extIds, content);
@@ -67,20 +77,20 @@ class DID {
 
     /**
      * Builds a DID Document.
-     * @returns {Object} An object with the DID Document properties.
+     * @returns {DIDDocument} An object with the DID Document properties.
      */
-    _buildDIDDocument() {
-        let didDocument = {
-            didMethodVersion: this.specVersion,
-            managementKey: this.managementKeys.map(k => k.toEntryObj(this.id))
+    private _buildDIDDocument(): DIDDocument {
+        const didDocument: DIDDocument = {
+            didMethodVersion: this.specVersion as string,
+            managementKey: this.managementKeys.map((k) => k.toEntryObj(this.id)),
         };
 
         if (this.didKeys.length > 0) {
-            didDocument.didKey = this.didKeys.map(k => k.toEntryObj(this.id));
+            didDocument.didKey = this.didKeys.map((k) => k.toEntryObj(this.id));
         }
 
         if (this.services.length > 0) {
-            didDocument.services = this.services.map(s => s.toEntryObj(this.id));
+            didDocument.service = this.services.map((s) => s.toEntryObj(this.id));
         }
 
         return didDocument;
@@ -88,14 +98,20 @@ class DID {
 
     /**
      * DID builder static factory.
-     * @param {string} didId - The decentralized identifier, a 32 byte hexadecimal string.
+     * @param {string} [didId] - The decentralized identifier, a 32 byte hexadecimal string.
      * @param {ManagementKey[]} [managementKeys] - A list of management keys.
      * @param {DIDKey[]} [didKeys] - A list of DID keys.
      * @param {Service[]} [services] - A list of services.
      * @param {string} [specVersion] - DID Method version.
      * @returns {DIDBuilder} A new DIDBuilder.
      */
-    static builder(didId, managementKeys, didKeys, services, specVersion = DID_METHOD_SPEC_V020) {
+    static builder(
+        didId?: string,
+        managementKeys?: ManagementKey[],
+        didKeys?: DIDKey[],
+        services?: Service[],
+        specVersion: string = DID_METHOD_SPEC_V020
+    ): DIDBuilder {
         return new DIDBuilder(didId, managementKeys, didKeys, services, specVersion);
     }
 }
@@ -103,52 +119,81 @@ class DID {
 /**
  * Class that enables the construction of a DID, by facilitating the construction of management keys and DID keys and the
  *  addition of services.
- * @param {string} didId - The decentralized identifier, a 32 byte hexadecimal string.
- * @param {ManagementKey[]} managementKeys - A list of management keys.
- * @param {DIDKey[]} didKeys - A list of DID keys.
- * @param {Service[]} services - A list of services.
- * @param {string} specVersion - DID Method version.
+ * @param {string} [didId] - The decentralized identifier, a 32 byte hexadecimal string.
+ * @param {ManagementKey[]} [managementKeys] - A list of management keys.
+ * @param {DIDKey[]} [didKeys] - A list of DID keys.
+ * @param {Service[]} [services] - A list of services.
+ * @param {string} [specVersion] - DID Method version.
  */
-class DIDBuilder {
-    constructor(didId, managementKeys, didKeys, services, specVersion) {
+export class DIDBuilder {
+    public managementKeys: ManagementKey[];
+    public didKeys: DIDKey[];
+    public services: Service[];
+    private _id: string;
+    private _nonce: Buffer | undefined;
+    private _network: Network;
+    private _specVersion: string | undefined;
+    private _usedKeyAliases: Set<string>;
+    private _usedServiceAliases: Set<string>;
+
+    constructor(
+        didId?: string,
+        managementKeys?: ManagementKey[],
+        didKeys?: DIDKey[],
+        services?: Service[],
+        specVersion?: string
+    ) {
         this._id = didId && isValidDIDId(didId) ? didId : this._generateDIDId();
-        this._managementKeys = managementKeys ? managementKeys : [];
-        this._didKeys = didKeys ? didKeys : [];
-        this._services = services ? services : [];
+        this.managementKeys = managementKeys ? managementKeys : [];
+        this.didKeys = didKeys ? didKeys : [];
+        this.services = services ? services : [];
         this._network = this._getNetworkFromId(this._id);
         this._specVersion = specVersion;
 
-        this.usedKeyAliases = new Set();
-        this.usedServiceAliases = new Set();
+        this._usedKeyAliases = new Set();
+        this._usedServiceAliases = new Set();
 
-        this._managementKeys.forEach(key => {
-            this._checkAliasIsUnique(this.usedKeyAliases, key.alias);
+        this.managementKeys.forEach((key) => {
+            this._checkAliasIsUnique(this._usedKeyAliases, key.alias);
         });
 
-        this._didKeys.forEach(key => {
-            this._checkAliasIsUnique(this.usedKeyAliases, key.alias);
+        this.didKeys.forEach((key) => {
+            this._checkAliasIsUnique(this._usedKeyAliases, key.alias);
         });
 
-        this._services.forEach(service => {
-            this._checkAliasIsUnique(this.usedServiceAliases, service.alias);
+        this.services.forEach((service) => {
+            this._checkAliasIsUnique(this._usedServiceAliases, service.alias);
         });
+    }
+
+    get id(): string {
+        return this._id;
+    }
+
+    get nonce(): Buffer | undefined {
+        return this._nonce;
+    }
+
+    get network(): Network {
+        return this._network;
+    }
+
+    get specVersion(): string | undefined {
+        return this._specVersion;
     }
 
     /**
      * @returns {string} The chain ID where this DID is (or will be) stored.
      */
-    get chainId() {
-        return this._id
-            .split(':')
-            .slice(-1)
-            .pop();
+    get chainId(): string {
+        return this._id.split(':').slice(-1).pop() as string;
     }
 
     /**
      * @returns {DIDUpdater} - An object allowing updates to the existing DID.
      */
-    update() {
-        if (this._managementKeys.length === 0) {
+    update(): DIDUpdater {
+        if (this.managementKeys.length === 0) {
             throw new Error('Cannot update DID without management keys.');
         }
 
@@ -158,8 +203,8 @@ class DIDBuilder {
     /**
      * @returns {DIDDeactivator} - An object allowing deactivation of the existing DID.
      */
-    deactivate() {
-        if (this._managementKeys.length === 0) {
+    deactivate(): DIDDeactivator {
+        if (this.managementKeys.length === 0) {
             throw new Error('Cannot deactivate DID without a management key of priority 0.');
         }
 
@@ -170,8 +215,8 @@ class DIDBuilder {
      * @param {string} newSpecVersion - The new DID Method version
      * @returns {DIDVersionUpgrader} - An object allowing method spec version upgrade of the existing DID.
      */
-    upgradeSpecVersion(newSpecVersion) {
-        if (this._managementKeys.length === 0) {
+    upgradeSpecVersion(newSpecVersion: string): DIDVersionUpgrader {
+        if (this.managementKeys.length === 0) {
             throw new Error('Cannot upgrade method spec version for DID without management keys.');
         }
 
@@ -182,7 +227,7 @@ class DIDBuilder {
      * Sets the DID network to mainnet.
      * @returns {DIDBuilder} - DIDBuilder instance.
      */
-    mainnet() {
+    mainnet(): this {
         this._network = Network.Mainnet;
         this._id = `${DID_METHOD_NAME}:${this._network}:${this.chainId}`;
 
@@ -193,7 +238,7 @@ class DIDBuilder {
      * Sets the DID network to testnet.
      * @returns {DIDBuilder} - DIDBuilder instance.
      */
-    testnet() {
+    testnet(): this {
         this._network = Network.Testnet;
         this._id = `${DID_METHOD_NAME}:${this._network}:${this.chainId}`;
 
@@ -211,14 +256,20 @@ class DIDBuilder {
      * @param {number} [priorityRequirement] - A non-negative integer showing the minimum hierarchical level a key must have in order to remove this key.
      * @returns {DIDBuilder} - DIDBuilder instance.
      */
-    managementKey(alias, priority, keyType = KeyType.EdDSA, controller, priorityRequirement) {
+    managementKey(
+        alias: string,
+        priority: number,
+        keyType: KeyType = KeyType.EdDSA,
+        controller?: string,
+        priorityRequirement?: number
+    ): this {
         if (!controller) {
             controller = this._id;
         }
 
         const key = new ManagementKey(alias, priority, keyType, controller, priorityRequirement);
-        this._checkAliasIsUnique(this.usedKeyAliases, key.alias);
-        this._managementKeys.push(key);
+        this._checkAliasIsUnique(this._usedKeyAliases, key.alias);
+        this.managementKeys.push(key);
 
         return this;
     }
@@ -233,14 +284,20 @@ class DIDBuilder {
      * @param {number} [priorityRequirement] - A non-negative integer showing the minimum hierarchical level a key must have in order to remove this key.
      * @returns {DIDBuilder} - DIDBuilder instance.
      */
-    didKey(alias, purpose, keyType = KeyType.EdDSA, controller, priorityRequirement) {
+    didKey(
+        alias: string,
+        purpose: DIDKeyPurpose | DIDKeyPurpose[],
+        keyType: KeyType = KeyType.EdDSA,
+        controller?: string,
+        priorityRequirement?: number
+    ): this {
         if (!controller) {
             controller = this._id;
         }
 
         const key = new DIDKey(alias, purpose, keyType, controller, priorityRequirement);
-        this._checkAliasIsUnique(this.usedKeyAliases, key.alias);
-        this._didKeys.push(key);
+        this._checkAliasIsUnique(this._usedKeyAliases, key.alias);
+        this.didKeys.push(key);
 
         return this;
     }
@@ -257,7 +314,13 @@ class DIDBuilder {
      * @param {Object} [customFields] - An object containing custom fields (e.g "description": "My public social inbox").
      * @returns {DIDBuilder} - DIDBuilder instance.
      */
-    service(alias, serviceType, endpoint, priorityRequirement, customFields) {
+    service(
+        alias: string,
+        serviceType: string,
+        endpoint: string,
+        priorityRequirement?: number,
+        customFields?: any
+    ): this {
         const service = new Service(
             alias,
             serviceType,
@@ -265,8 +328,8 @@ class DIDBuilder {
             priorityRequirement,
             customFields
         );
-        this._checkAliasIsUnique(this.usedServiceAliases, service.alias);
-        this._services.push(service);
+        this._checkAliasIsUnique(this._usedServiceAliases, service.alias);
+        this.services.push(service);
 
         return this;
     }
@@ -275,7 +338,7 @@ class DIDBuilder {
      * Build the DID.
      * @returns {DID} - Built DID.
      */
-    build() {
+    build(): DID {
         return new DID(this);
     }
 
@@ -283,13 +346,17 @@ class DIDBuilder {
      * Generates a new DID Id.
      * @returns {string} - A DID Id.
      */
-    _generateDIDId() {
-        this._nonce = crypto.randomBytes(32);
-        const chainId = calculateChainId([EntryType.Create, ENTRY_SCHEMA_V100, this._nonce]);
+    private _generateDIDId(): string {
+        this._nonce = randomBytes(32);
+        const chainId = calculateChainId([
+            EntryType.Create,
+            ENTRY_SCHEMA_V100,
+            this._nonce as Buffer,
+        ]);
         return `${DID_METHOD_NAME}:${chainId}`;
     }
 
-    _checkAliasIsUnique(usedAliases, alias) {
+    private _checkAliasIsUnique(usedAliases: Set<string>, alias: string): void {
         if (usedAliases.has(alias)) {
             throw new Error(`Duplicate alias "${alias}" detected.`);
         }
@@ -297,16 +364,12 @@ class DIDBuilder {
         usedAliases.add(alias);
     }
 
-    _getNetworkFromId(didId) {
+    private _getNetworkFromId(didId: string): Network {
         const parts = didId.split(':');
         if (parts.length === 4) {
-            return parts[2];
+            return parts[2] as Network;
         }
 
         return Network.Unspecified;
     }
 }
-
-module.exports = {
-    DID
-};
