@@ -1,6 +1,4 @@
-const { DID } = require('../src/factom-did.js'),
-    { Ed25519Key } = require('../src/keys/eddsa'),
-    { KeyType, DIDKeyPurpose } = require('../src/enums');
+import { DID, Ed25519Key, KeyType, DIDKeyPurpose } from '../src/factom-did';
 
 /**
  * Builds a new DID containing:
@@ -8,7 +6,7 @@ const { DID } = require('../src/factom-did.js'),
  *   - new authentication key with specified key type
  *   - new service
  */
-function buildDID() {
+const buildDID = () => {
     return (
         DID.builder()
             // Can be mainnet/testnet or omitted entirely, in which case no network specifier will be added to the DID
@@ -18,9 +16,9 @@ function buildDID() {
             .service('my-service', 'email', 'https://emailme.com')
             .build()
     );
-}
+};
 
-function createDIDManagementEntry() {
+const createDIDManagementEntry = () => {
     const did = buildDID();
 
     // exports entry's extIds and content
@@ -28,12 +26,12 @@ function createDIDManagementEntry() {
 
     const content = JSON.parse(entryData['content'].toString());
     console.log(content);
-}
+};
 
 /**
  * Builds a new DID instance and updates the DID.
  */
-function createDIDUpdateEntry() {
+const createDIDUpdateEntry = () => {
     const did = buildDID();
 
     const updater = DID.builder(
@@ -54,9 +52,9 @@ function createDIDUpdateEntry() {
     const entryData = updater.exportEntryData();
     const content = entryData['content'].toString();
     console.log(content);
-}
+};
 
-function createDIDDeactivationEntry() {
+const createDIDDeactivationEntry = () => {
     const did = buildDID();
 
     const deactivator = DID.builder(
@@ -68,9 +66,9 @@ function createDIDDeactivationEntry() {
 
     const entryData = deactivator.exportEntryData();
     console.log(entryData);
-}
+};
 
-function createDIDMethodVersionUpgradeEntry() {
+const createDIDMethodVersionUpgradeEntry = () => {
     const did = buildDID();
 
     const upgrader = DID.builder(
@@ -85,14 +83,14 @@ function createDIDMethodVersionUpgradeEntry() {
 
     const content = entryData['content'].toString();
     console.log(content);
-}
+};
 
-function signAndVerifyUsingEd25519Key() {
+const signAndVerifyUsingEd25519Key = () => {
     const key = new Ed25519Key();
     const key2 = new Ed25519Key(key.publicKey, key.privateKey);
 
     const signature = key2.sign('test');
     console.log(key.verify('test', Buffer.from(signature)));
-}
+};
 
 createDIDManagementEntry();
