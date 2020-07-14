@@ -1,8 +1,8 @@
-const assert = require('chai').assert,
-    { RSAKey } = require('../../src/keys/rsa');
+import { assert } from 'chai';
+import { RSAKey } from '../../src/factom-did';
 
-describe('Test RSA Keys', function() {
-    it('should generate new key pair', function() {
+describe('Test RSA Keys', function () {
+    it('should generate new key pair', function () {
         const key = new RSAKey();
 
         assert.isString(key.publicKey);
@@ -11,7 +11,7 @@ describe('Test RSA Keys', function() {
         assert.isString(key.signingKey);
     });
 
-    it('should initialize with PEM encoded public and private key', function() {
+    it('should initialize with PEM encoded public and private key', function () {
         const firstKey = new RSAKey();
         const secondKey = new RSAKey(firstKey.publicKey, firstKey.privateKey);
 
@@ -19,36 +19,36 @@ describe('Test RSA Keys', function() {
         assert.strictEqual(secondKey.privateKey, firstKey.privateKey);
     });
 
-    it('should throw error if public key is not string', function() {
+    it('should throw error if public key is not string', function () {
         const testCases = [1, {}];
-        testCases.forEach(publicKey => {
-            assert.throw(() => new RSAKey(publicKey), 'Public key must be PEM encoded.');
+        testCases.forEach((publicKey) => {
+            assert.throw(() => new RSAKey(publicKey as string), 'Public key must be PEM encoded.');
         });
     });
 
-    it('should throw error if private key is not string', function() {
+    it('should throw error if private key is not string', function () {
         const testCases = [1, {}];
-        testCases.forEach(privateKey => {
+        testCases.forEach((privateKey) => {
             assert.throw(
-                () => new RSAKey(undefined, privateKey),
+                () => new RSAKey(undefined, privateKey as string),
                 'Private key must be PEM encoded.'
             );
         });
     });
 
-    it('should sign a message and verify the signature', function() {
+    it('should sign a message and verify the signature', function () {
         const key = new RSAKey();
         const message = 'test message';
         const testCases = [message, Buffer.from(message)];
 
-        testCases.forEach(message => {
-            const signature = key.sign(message);
-            const verified = key.verify(message, signature);
+        testCases.forEach((_message) => {
+            const signature = key.sign(_message);
+            const verified = key.verify(_message, signature);
             assert.isTrue(verified);
         });
     });
 
-    it('should return false if the signature cannot be verified', function() {
+    it('should return false if the signature cannot be verified', function () {
         const signingKey = new RSAKey();
         const message = 'test message';
         const falseMessage = 'test messag';
@@ -58,7 +58,7 @@ describe('Test RSA Keys', function() {
         assert.isFalse(verified);
     });
 
-    it('should throw error if private key is not set', function() {
+    it('should throw error if private key is not set', function () {
         const firstKey = new RSAKey();
         const signingKey = new RSAKey(firstKey.publicKey);
         const message = 'test message';
@@ -66,7 +66,7 @@ describe('Test RSA Keys', function() {
         assert.throw(() => signingKey.sign(message), 'Private key is not set.');
     });
 
-    it('should throw error if public key is not set', function() {
+    it('should throw error if public key is not set', function () {
         const firstKey = new RSAKey();
         const signingKey = new RSAKey(undefined, firstKey.privateKey);
         const message = 'test message';
@@ -75,22 +75,25 @@ describe('Test RSA Keys', function() {
         assert.throw(() => signingKey.verify(message, signature), 'Public key is not set.');
     });
 
-    it('should throw error if signing message is not string or Buffer', function() {
+    it('should throw error if signing message is not string or Buffer', function () {
         const signingKey = new RSAKey();
         const testCases = [{}, 5];
 
-        testCases.forEach(message => {
-            assert.throw(() => signingKey.sign(message), 'Message must be a string or Buffer.');
+        testCases.forEach((message) => {
+            assert.throw(
+                () => signingKey.sign(message as string),
+                'Message must be a string or Buffer.'
+            );
         });
     });
 
-    it('should throw error if verifying message is not string or Buffer', function() {
+    it('should throw error if verifying message is not string or Buffer', function () {
         const signingKey = new RSAKey();
         const testCases = [{}, 5];
 
-        testCases.forEach(message => {
+        testCases.forEach((message) => {
             assert.throw(
-                () => signingKey.verify(message, Buffer.from([])),
+                () => signingKey.verify(message as string, Buffer.from([])),
                 'Message must be a string or Buffer.'
             );
         });

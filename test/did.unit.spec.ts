@@ -1,19 +1,28 @@
-const { assert, expect } = require('chai').use(require('chai-bytes')),
-    { DID } = require('../src/did'),
-    { DIDKey } = require('../src/keys/did'),
-    { DID_METHOD_SPEC_V020, DID_METHOD_NAME, ENTRY_SCHEMA_V100 } = require('../src/constants'),
-    { ManagementKey } = require('../src/keys/management'),
-    { Network, EntryType, KeyType, DIDKeyPurpose } = require('../src/enums'),
-    { Service } = require('../src/service');
+import { assert, expect, use } from 'chai';
+import chaibytes from 'chai-bytes';
+import {
+    DID,
+    DIDKey,
+    ManagementKey,
+    Network,
+    EntryType,
+    KeyType,
+    DIDKeyPurpose,
+    Service,
+} from '../src/factom-did';
+import { DID_METHOD_SPEC_V020, DID_METHOD_NAME, ENTRY_SCHEMA_V100 } from '../src/constants';
+
+use(chaibytes);
 
 const idRegex = new RegExp(`^${DID_METHOD_NAME}:[a-f0-9]{64}$`);
 
-describe('Test DID', function() {
-    it('should throw error if DID class is instantiated directly', function() {
-        assert.throw(() => new DID(), 'Use `DID.builder()` syntax to create a new DID');
+describe('Test DID', function () {
+    it('should throw error if builder is not instance of DIDBuilder class', function () {
+        const obj: any = {};
+        assert.throw(() => new DID(obj), 'Use `DID.builder()` syntax to create a new DID');
     });
 
-    it('should generate new empty DID', function() {
+    it('should generate new empty DID', function () {
         const did = DID.builder().build();
 
         assert.match(did.id, idRegex);
@@ -23,45 +32,54 @@ describe('Test DID', function() {
         assert.isEmpty(did.managementKeys);
         assert.isEmpty(did.didKeys);
         assert.isEmpty(did.services);
-        assert.isUndefined(did.network);
+        assert.isEmpty(did.network);
         assert.strictEqual(did.specVersion, DID_METHOD_SPEC_V020);
     });
 
-    it('should initialize DIDBuilder correctly', function() {
+    it('should initialize DIDBuilder correctly', function () {
         const didId = `${DID_METHOD_NAME}:${Network.Testnet}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b8005`;
         const managementKeys = [
             new ManagementKey('my-first-key', 0, KeyType.EdDSA, didId),
-            new ManagementKey('my-second-key', 1, KeyType.ECDSA, didId, 0)
+            new ManagementKey('my-second-key', 1, KeyType.ECDSA, didId, 0),
         ];
         const didKeys = [
-            new DIDKey('my-did-key', DIDKeyPurpose.AuthenticationKey, KeyType.RSA, didId, 1)
+            new DIDKey('my-did-key', DIDKeyPurpose.AuthenticationKey, KeyType.RSA, didId, 1),
         ];
         const services = [
-            new Service('my-photo-service', 'PhotoStreamService', 'https://myphoto.com', 1)
+            new Service('my-photo-service', 'PhotoStreamService', 'https://myphoto.com', 1),
         ];
 
         const didBuilder = DID.builder(didId, managementKeys, didKeys, services);
-        assert.strictEqual(didBuilder._id, didId);
-        assert.strictEqual(didBuilder._managementKeys, managementKeys);
-        assert.strictEqual(didBuilder._didKeys, didKeys);
-        assert.strictEqual(didBuilder._services, services);
-        assert.strictEqual(didBuilder._network, Network.Testnet);
-        assert.strictEqual(didBuilder._specVersion, DID_METHOD_SPEC_V020);
-        assert.strictEqual(didBuilder.usedKeyAliases.size, 3);
-        assert.strictEqual(didBuilder.usedServiceAliases.size, 1);
-        assert.isTrue(didBuilder.usedKeyAliases.has('my-first-key'));
-        assert.isTrue(didBuilder.usedKeyAliases.has('my-second-key'));
-        assert.isTrue(didBuilder.usedKeyAliases.has('my-did-key'));
-        assert.isTrue(didBuilder.usedServiceAliases.has('my-photo-service'));
+        assert.strictEqual(didBuilder.id, didId);
+        assert.strictEqual(didBuilder.managementKeys, managementKeys);
+        assert.strictEqual(didBuilder.didKeys, didKeys);
+        assert.strictEqual(didBuilder.services, services);
+        assert.strictEqual(didBuilder.network, Network.Testnet);
+        assert.strictEqual(didBuilder.specVersion, DID_METHOD_SPEC_V020);
+        assert.strictEqual((didBuilder as any)._usedKeyAliases.size, 3);
+        assert.strictEqual((didBuilder as any)._usedServiceAliases.size, 1);
+        assert.isTrue((didBuilder as any)._usedKeyAliases.has('my-first-key'));
+        assert.isTrue((didBuilder as any)._usedKeyAliases.has('my-second-key'));
+        assert.isTrue((didBuilder as any)._usedKeyAliases.has('my-did-key'));
+        assert.isTrue((didBuilder as any)._usedServiceAliases.has('my-photo-service'));
     });
 
-    it('should generate new didId if the one passed is invalid', function() {
+    it('should initialize DIDBuilder correctly with different spec version', function () {
+        const didId = `${DID_METHOD_NAME}:${Network.Testnet}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b8005`;
+        const managementKeys = [new ManagementKey('my-first-key', 0, KeyType.EdDSA, didId)];
+        const specVersion = '0.3.0';
+
+        const didBuilder = DID.builder(didId, managementKeys, undefined, undefined, specVersion);
+        assert.strictEqual(didBuilder.specVersion, specVersion);
+    });
+
+    it('should generate new didId if the one passed is invalid', function () {
         const didId = `${DID_METHOD_NAME}:${Network.Testnet}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b800`;
         const didBuilder = DID.builder(didId);
-        assert.notEqual(didBuilder._id, didId);
+        assert.notEqual(didBuilder.id, didId);
     });
 
-    it('should throw error if duplicate key alias is passed', function() {
+    it('should throw error if duplicate key alias is passed', function () {
         const alias = 'my-first-key';
         const didId = `${DID_METHOD_NAME}:${Network.Testnet}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b8005`;
         const managementKeys = [new ManagementKey(alias, 0, KeyType.EdDSA, didId)];
@@ -73,12 +91,12 @@ describe('Test DID', function() {
         );
     });
 
-    it('should throw error if duplicate service alias is passed', function() {
+    it('should throw error if duplicate service alias is passed', function () {
         const alias = 'my-photo-service';
         const didId = `${DID_METHOD_NAME}:${Network.Testnet}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b8005`;
         const services = [
             new Service(alias, 'PhotoStreamService', 'https://myphoto.com', 1),
-            new Service(alias, 'PhotoStreamService', 'https://myphoto.com', 1)
+            new Service(alias, 'PhotoStreamService', 'https://myphoto.com', 1),
         ];
 
         assert.throw(
@@ -87,10 +105,8 @@ describe('Test DID', function() {
         );
     });
 
-    it('should check frozen properties', function() {
-        const did = DID.builder()
-            .managementKey('my-key-1', 0)
-            .build();
+    it('should check frozen properties', function () {
+        const did = DID.builder().managementKey('my-key-1', 0).build();
 
         assert.isFrozen(did.id);
         assert.isFrozen(did.network);
@@ -100,40 +116,34 @@ describe('Test DID', function() {
         assert.isFrozen(did.services);
     });
 
-    it('should build mainnet DID', function() {
-        const did = DID.builder()
-            .mainnet()
-            .build();
+    it('should build mainnet DID', function () {
+        const did = DID.builder().mainnet().build();
 
         const regex = new RegExp(`^${DID_METHOD_NAME}:${Network.Mainnet}:[a-f0-9]{64}$`);
         assert.match(did.id, regex);
         assert.strictEqual(did.network, Network.Mainnet);
     });
 
-    it('should build testnet DID', function() {
-        const did = DID.builder()
-            .testnet()
-            .build();
+    it('should build testnet DID', function () {
+        const did = DID.builder().testnet().build();
 
         const regex = new RegExp(`^${DID_METHOD_NAME}:${Network.Testnet}:[a-f0-9]{64}$`);
         assert.match(did.id, regex);
         assert.strictEqual(did.network, Network.Testnet);
     });
 
-    it('should export correct extIds', function() {
-        const did = DID.builder()
-            .managementKey('my-management-key', 0)
-            .build();
+    it('should export correct extIds', function () {
+        const did = DID.builder().managementKey('my-management-key', 0).build();
 
         const entryData = did.exportEntryData();
 
         const extIds = entryData['extIds'];
         expect(extIds[0]).to.equalBytes(Buffer.from(EntryType.Create));
         expect(extIds[1]).to.equalBytes(Buffer.from(ENTRY_SCHEMA_V100));
-        expect(extIds[2]).to.equalBytes(did.nonce);
+        expect(extIds[2]).to.equalBytes(did.nonce as Buffer);
     });
 
-    it('should export entry data with management keys', function() {
+    it('should export entry data with management keys', function () {
         const firstManagementKeyAlias = 'my-first-management-key';
         const firstManagementKeyPriority = 0;
         const secondManagementKeyAlias = 'my-second-management-key';
@@ -182,7 +192,7 @@ describe('Test DID', function() {
         );
     });
 
-    it('should export entry data with did key and service', function() {
+    it('should export entry data with did key and service', function () {
         const didKeyAlias = 'my-public-key';
         const didKeyPurpose = [DIDKeyPurpose.PublicKey];
         const didKeyType = KeyType.RSA;
@@ -197,7 +207,7 @@ describe('Test DID', function() {
         const serviceCost = { amount: '0.50', currency: 'USD' };
         const serviceCustomFields = {
             description: serviceDescription,
-            cost: serviceCost
+            cost: serviceCost,
         };
 
         const did = DID.builder()
@@ -224,7 +234,7 @@ describe('Test DID', function() {
         const content = JSON.parse(entryData['content'].toString());
 
         const didKeys = content['didKey'];
-        const services = content['services'];
+        const services = content['service'];
         assert.strictEqual(content['managementKey'].length, 2);
         assert.strictEqual(didKeys.length, 1);
         assert.strictEqual(services.length, 1);
@@ -249,7 +259,7 @@ describe('Test DID', function() {
         );
     });
 
-    it('should throw error if entry does not have at least one management key', function() {
+    it('should throw error if entry does not have at least one management key', function () {
         assert.throw(() => {
             DID.builder()
                 .didKey('my-did-key', [DIDKeyPurpose.AuthenticationKey])
@@ -259,7 +269,7 @@ describe('Test DID', function() {
         }, 'The DID must have at least one management key.');
     });
 
-    it('should throw error if entry does not have at least one management key with priority 0', function() {
+    it('should throw error if entry does not have at least one management key with priority 0', function () {
         assert.throw(() => {
             DID.builder()
                 .managementKey('my-mgmg-key-1', 1)
@@ -269,7 +279,7 @@ describe('Test DID', function() {
         }, 'At least one management key must have priority 0.');
     });
 
-    it('should throw error if entry size is exceeded', function() {
+    it('should throw error if entry size is exceeded', function () {
         const builder = DID.builder();
         assert.throw(() => {
             for (let i = 0; i < 35; i++) {
