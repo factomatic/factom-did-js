@@ -8,7 +8,7 @@ import {
     isValidDIDId,
     validateAlias,
     validateKeyType,
-    validatePriorityRequirement,
+    validatePriorityRequirement
 } from '../validators';
 
 /**
@@ -102,7 +102,7 @@ export class AbstractDIDKey {
                 id: this.fullId(didId),
                 type: this.keyType,
                 controller: this.controller,
-                [this._underlyingKey.ON_CHAIN_PUB_KEY_NAME]: this._underlyingKey.publicKey,
+                [this._underlyingKey.ON_CHAIN_PUB_KEY_NAME]: this._underlyingKey.publicKey
             };
 
             if (this.priorityRequirement !== undefined) {

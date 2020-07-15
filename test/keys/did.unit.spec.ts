@@ -2,8 +2,8 @@ import { assert } from 'chai';
 import { DID, KeyType, DIDKeyPurpose } from '../../src/factom-did';
 import { DID_METHOD_NAME } from '../../src/constants';
 
-describe('Test DID Keys', function () {
-    it('should add DID keys', function () {
+describe('Test DID Keys', function() {
+    it('should add DID keys', function() {
         const firstDIDKeyAlias = 'did-key-1';
         const firstDIDKeyPurpose = [DIDKeyPurpose.PublicKey];
 
@@ -62,10 +62,10 @@ describe('Test DID Keys', function () {
         assert.strictEqual(did.didKeys.length, 3);
     });
 
-    it('should throw error if alias is invalid', function () {
+    it('should throw error if alias is invalid', function() {
         const builder = DID.builder();
         const testCases = ['myDidKey', 'my-d!d-key', 'my_did_key'];
-        testCases.forEach((alias) => {
+        testCases.forEach(alias => {
             assert.throw(
                 () => builder.didKey(alias, DIDKeyPurpose.AuthenticationKey),
                 'Alias must not be more than 32 characters long and must contain only lower-case letters, digits and hyphens.'
@@ -73,7 +73,7 @@ describe('Test DID Keys', function () {
         });
     });
 
-    it('should throw error if purpose is invalid', function () {
+    it('should throw error if purpose is invalid', function() {
         const builder = DID.builder();
 
         assert.throw(() => builder.didKey('did-key-1', 1 as any), 'Invalid purpose type.');
@@ -82,7 +82,7 @@ describe('Test DID Keys', function () {
             () =>
                 builder.didKey('did-key-1', [
                     DIDKeyPurpose.AuthenticationKey,
-                    DIDKeyPurpose.AuthenticationKey,
+                    DIDKeyPurpose.AuthenticationKey
                 ]),
             `Purpose must contain one or both of ${DIDKeyPurpose.PublicKey} and ${DIDKeyPurpose.AuthenticationKey} without repeated values`
         );
@@ -96,7 +96,7 @@ describe('Test DID Keys', function () {
             () =>
                 builder.didKey('did-key-1', [
                     DIDKeyPurpose.AuthenticationKey,
-                    'invalid-purpose-type' as DIDKeyPurpose,
+                    'invalid-purpose-type' as DIDKeyPurpose
                 ]),
             'Purpose must contain only valid DIDKeyPurpose values.'
         );
@@ -107,7 +107,7 @@ describe('Test DID Keys', function () {
         );
     });
 
-    it('should throw error if alias is used', function () {
+    it('should throw error if alias is used', function() {
         const builder = DID.builder();
         const didKeyAlias = 'did-key-1';
         builder.didKey(didKeyAlias, DIDKeyPurpose.PublicKey);
@@ -117,7 +117,7 @@ describe('Test DID Keys', function () {
         );
     });
 
-    it('should throw error if keyType is invalid', function () {
+    it('should throw error if keyType is invalid', function() {
         const builder = DID.builder();
         const didKeyAlias = 'did-key-1';
         const didKeyType = 'invalidKeyType';
@@ -127,12 +127,12 @@ describe('Test DID Keys', function () {
         );
     });
 
-    it('should throw error if controller is invalid', function () {
+    it('should throw error if controller is invalid', function() {
         const builder = DID.builder();
         const testCases = [
             `${DID_METHOD_NAME}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654h05f838b8005`,
             'did:fctr:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b8005',
-            `${DID_METHOD_NAME}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b800`,
+            `${DID_METHOD_NAME}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b800`
         ];
         testCases.forEach((controller, index) => {
             assert.throw(
@@ -148,7 +148,7 @@ describe('Test DID Keys', function () {
         });
     });
 
-    it('should throw error if priorityRequired is invalid', function () {
+    it('should throw error if priorityRequired is invalid', function() {
         const builder = DID.builder();
         const testCases = [-1, -2, 'one', 1.5];
         testCases.forEach((priorityRequirement, index) => {

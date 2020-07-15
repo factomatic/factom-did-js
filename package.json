@@ -13,9 +13,9 @@
     "build": "webpack",
     "test": "nyc --reporter=html --reporter=text mocha -r ts-node/register 'test/**/*.spec.ts'",
     "example": "ts-node examples/example.ts",
-    "lint": "eslint \"{src,test}/**/*.js\"",
-    "prepublishOnly": "npm run format && npm run lint && npm run build && npm run test",
-    "format": "prettier --write \"{src,test,examples}/**/*.js\""
+    "lint": "tslint \"{src,test}/**/*.ts\"",
+    "format": "prettier --write \"{src,test,examples}/**/*.ts\"",
+    "prepublishOnly": "npm run format && npm run lint && npm run build && npm run test"
   },
   "author": "Peter Asenov",
   "contributors": [
@@ -51,6 +51,8 @@
     "nyc": "^15.0.1",
     "prettier": "1.19.1",
     "ts-node": "^8.10.2",
+    "tslint": "^6.1.2",
+    "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.9.6",
     "webpack": "^4.42.0",
     "webpack-cli": "^3.3.11"

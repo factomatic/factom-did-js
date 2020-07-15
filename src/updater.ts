@@ -41,9 +41,9 @@ export class DIDUpdater {
     get didKeys(): DIDKey[] {
         /** Apply revocation of DID key purposes */
         const didKeys: DIDKey[] = [];
-        this._didBuilder.didKeys.forEach((key) => {
+        this._didBuilder.didKeys.forEach(key => {
             let revoked = false;
-            Object.keys(this._didKeyPurposesToRevoke).forEach((alias) => {
+            Object.keys(this._didKeyPurposesToRevoke).forEach(alias => {
                 if (alias === key.alias) {
                     const revokedPurpose = this._didKeyPurposesToRevoke[alias];
                     const remainingPurpose =
@@ -149,7 +149,7 @@ export class DIDUpdater {
      */
     revokeManagementKey(alias: string): this {
         this._didBuilder.managementKeys = this._didBuilder.managementKeys.filter(
-            (k) => k.alias !== alias
+            k => k.alias !== alias
         );
         return this;
     }
@@ -160,7 +160,7 @@ export class DIDUpdater {
      * @returns {DIDUpdater}
      */
     revokeDIDKey(alias: string): this {
-        this._didBuilder.didKeys = this._didBuilder.didKeys.filter((k) => k.alias !== alias);
+        this._didBuilder.didKeys = this._didBuilder.didKeys.filter(k => k.alias !== alias);
         return this;
     }
 
@@ -175,7 +175,7 @@ export class DIDUpdater {
             return this;
         }
 
-        const didKey = this._didBuilder.didKeys.find((k) => k.alias === alias);
+        const didKey = this._didBuilder.didKeys.find(k => k.alias === alias);
         if (!didKey) {
             return this;
         }
@@ -198,7 +198,7 @@ export class DIDUpdater {
      * @returns {DIDUpdater}
      */
     revokeService(alias: string): this {
-        this._didBuilder.services = this._didBuilder.services.filter((s) => s.alias !== alias);
+        this._didBuilder.services = this._didBuilder.services.filter(s => s.alias !== alias);
         return this;
     }
 
@@ -208,10 +208,10 @@ export class DIDUpdater {
      * @returns {DIDUpdater}
      */
     rotateManagementKey(alias: string): this {
-        const managementKey = this._didBuilder.managementKeys.find((k) => k.alias === alias);
+        const managementKey = this._didBuilder.managementKeys.find(k => k.alias === alias);
         if (managementKey) {
             this._didBuilder.managementKeys = this._didBuilder.managementKeys.filter(
-                (k) => k.alias !== alias
+                k => k.alias !== alias
             );
             const managementKeyClone = Object.assign({}, managementKey);
             Object.setPrototypeOf(managementKeyClone, ManagementKey.prototype);
@@ -229,9 +229,9 @@ export class DIDUpdater {
      * @returns {DIDUpdater}
      */
     rotateDIDKey(alias: string): this {
-        const didKey = this._didBuilder.didKeys.find((k) => k.alias === alias);
+        const didKey = this._didBuilder.didKeys.find(k => k.alias === alias);
         if (didKey) {
-            this._didBuilder.didKeys = this._didBuilder.didKeys.filter((k) => k.alias !== alias);
+            this._didBuilder.didKeys = this._didBuilder.didKeys.filter(k => k.alias !== alias);
             const didKeyClone = Object.assign({}, didKey);
             Object.setPrototypeOf(didKeyClone, DIDKey.prototype);
 
@@ -243,7 +243,7 @@ export class DIDUpdater {
     }
 
     exportEntryData(): EntryData {
-        if (!this._didBuilder.managementKeys.some((k) => k.priority === 0)) {
+        if (!this._didBuilder.managementKeys.some(k => k.priority === 0)) {
             throw new Error('DIDUpdate entry would leave no management keys of priority zero.');
         }
 
@@ -277,18 +277,18 @@ export class DIDUpdater {
             revokedServicesResult.revoked
         );
 
-        Object.keys(this._didKeyPurposesToRevoke).forEach((alias) => {
+        Object.keys(this._didKeyPurposesToRevoke).forEach(alias => {
             try {
                 revokeObject['didKey'].push({
                     id: `${this._didBuilder.id}#${alias}`,
-                    purpose: [this._didKeyPurposesToRevoke[alias]],
+                    purpose: [this._didKeyPurposesToRevoke[alias]]
                 });
             } catch (e) {
                 revokeObject['didKey'] = [
                     {
                         id: `${this._didBuilder.id}#${alias}`,
-                        purpose: [this._didKeyPurposesToRevoke[alias]],
-                    },
+                        purpose: [this._didKeyPurposesToRevoke[alias]]
+                    }
                 ];
             }
         });
@@ -342,7 +342,7 @@ export class DIDUpdater {
             Buffer.from(EntryType.Update),
             Buffer.from(ENTRY_SCHEMA_V100),
             Buffer.from(signingKeyId),
-            Buffer.from(signature),
+            Buffer.from(signature)
         ];
 
         const entrySize = calculateEntrySize(extIds, Buffer.from(entryContent));
@@ -356,9 +356,9 @@ export class DIDUpdater {
     private _getNew(original: any[], current: any[]) {
         const _new: any[] = [];
         let requiredPriorityForUpdate = Number.POSITIVE_INFINITY;
-        const originalStrArray = original.map((e) => JSON.stringify(e));
+        const originalStrArray = original.map(e => JSON.stringify(e));
 
-        current.forEach((obj) => {
+        current.forEach(obj => {
             if (!originalStrArray.includes(JSON.stringify(obj))) {
                 _new.push(obj.toEntryObj(this._didBuilder.id));
 
@@ -374,9 +374,9 @@ export class DIDUpdater {
     private _getRevoked(original: any[], current: any[]) {
         const revoked: any[] = [];
         let requiredPriorityForUpdate = Number.POSITIVE_INFINITY;
-        const currentStrArray = current.map((e) => JSON.stringify(e));
+        const currentStrArray = current.map(e => JSON.stringify(e));
 
-        original.forEach((obj) => {
+        original.forEach(obj => {
             if (!currentStrArray.includes(JSON.stringify(obj))) {
                 revoked.push({ id: `${this._didBuilder.id}#${obj.alias}` });
 

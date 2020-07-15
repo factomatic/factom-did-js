@@ -48,7 +48,7 @@ export class Service {
             const entryObj: ServiceEntryObject = {
                 id: this._fullId(didId),
                 type: this.serviceType,
-                serviceEndpoint: this.endpoint,
+                serviceEndpoint: this.endpoint
             };
 
             if (this.priorityRequirement !== undefined) {
@@ -56,7 +56,7 @@ export class Service {
             }
 
             if (this.customFields !== undefined) {
-                Object.keys(this.customFields).forEach((customFieldKey) => {
+                Object.keys(this.customFields).forEach(customFieldKey => {
                     entryObj[customFieldKey] = this.customFields[customFieldKey];
                 });
             }

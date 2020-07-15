@@ -86,12 +86,12 @@ export class RSAKey {
             modulusLength: 2048,
             publicKeyEncoding: {
                 type: 'spki',
-                format: 'pem',
+                format: 'pem'
             },
             privateKeyEncoding: {
                 type: 'pkcs8',
-                format: 'pem',
-            },
+                format: 'pem'
+            }
         });
 
         this.verifyingKey = publicKey;

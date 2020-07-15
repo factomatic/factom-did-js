@@ -38,7 +38,7 @@ export class DIDDeactivator {
             Buffer.from(EntryType.Deactivation),
             Buffer.from(ENTRY_SCHEMA_V100),
             Buffer.from(signingKeyId),
-            Buffer.from(signature),
+            Buffer.from(signature)
         ];
 
         /** The content of the DIDDeactivation entry is empty */

@@ -1,0 +1,15 @@
+{
+    "extends": ["tslint:recommended", "tslint-config-prettier"],
+    "rules": {
+        "array-type": false,
+        "only-arrow-functions": false,
+        "no-string-literal": false,
+        "max-classes-per-file": false,
+        "no-console": [true, "log", "error"],
+        "no-string-throw": true,
+        "indent": [true, "spaces", 4],
+        "linebreak-style": [true, "LF"],
+        "quotemark": [true, "single"],
+        "semicolon": [true, "always"]
+    }
+}

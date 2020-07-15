@@ -6,7 +6,7 @@ import { createHash } from 'crypto';
  * @returns {string} - Calculated chain id.
  */
 export function calculateChainId(extIds: Array<string | Buffer>): string {
-    const extIdsHashBytes = extIds.reduce(function (
+    const extIdsHashBytes = extIds.reduce(function(
         total: Uint8Array,
         currentExtId: string | Buffer
     ) {
@@ -34,7 +34,7 @@ export function calculateEntrySize(extIds: Buffer[], content: Buffer): number {
     totalEntrySize += fixedHeaderSize + 2 * extIds.length;
     totalEntrySize += content.byteLength;
 
-    extIds.forEach((extId) => {
+    extIds.forEach(extId => {
         totalEntrySize += extId.byteLength;
     });
 

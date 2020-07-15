@@ -8,7 +8,7 @@ import {
     Network,
     EntryType,
     KeyType,
-    DIDKeyPurpose,
+    DIDKeyPurpose
 } from '../src/factom-did';
 import { DID_METHOD_NAME, ENTRY_SCHEMA_V100 } from '../src/constants';
 
@@ -17,21 +17,21 @@ use(chaibytes);
 const didId = `${DID_METHOD_NAME}:${Network.Mainnet}:db4549470d24534fac28569d0f9c65b5ecef8d6332bc788b4d1b8dc1c2dae13a`;
 const managementKeys = [
     new ManagementKey('my-first-mgmt-key', 0, KeyType.ECDSA, didId),
-    new ManagementKey('my-second-mgmt-key', 1, KeyType.RSA, didId),
+    new ManagementKey('my-second-mgmt-key', 1, KeyType.RSA, didId)
 ];
 const didKeys = [new DIDKey('did-key-1', DIDKeyPurpose.AuthenticationKey, KeyType.EdDSA, didId)];
 
-describe('Test DID Version Upgrader', function () {
-    it('should throw error if you try to deactivate DID without management keys', function () {
+describe('Test DID Version Upgrader', function() {
+    it('should throw error if you try to deactivate DID without management keys', function() {
         assert.throw(
             () => DID.builder().upgradeSpecVersion('0.3.0'),
             'Cannot upgrade method spec version for DID without management keys.'
         );
     });
 
-    it('should throw error if new version is not an upgrade on old version', function () {
+    it('should throw error if new version is not an upgrade on old version', function() {
         const testCases = [undefined, '0.0.0', '0.1.0', '0.2'];
-        testCases.forEach((version) => {
+        testCases.forEach(version => {
             assert.throw(
                 () =>
                     DID.builder(didId, [...managementKeys], [...didKeys]).upgradeSpecVersion(
@@ -42,7 +42,7 @@ describe('Test DID Version Upgrader', function () {
         });
     });
 
-    it('should export upgrade data correctly', function () {
+    it('should export upgrade data correctly', function() {
         const newSpecVersion = '0.3.0';
         const did = DID.builder(didId, [...managementKeys], [...didKeys]);
 

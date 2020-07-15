@@ -1,23 +1,23 @@
 export enum Network {
     Mainnet = 'mainnet',
     Testnet = 'testnet',
-    Unspecified = '',
+    Unspecified = ''
 }
 
 export enum KeyType {
     EdDSA = 'Ed25519VerificationKey',
     ECDSA = 'ECDSASecp256k1VerificationKey',
-    RSA = 'RSAVerificationKey',
+    RSA = 'RSAVerificationKey'
 }
 
 export enum DIDKeyPurpose {
     PublicKey = 'publicKey',
-    AuthenticationKey = 'authenticationKey',
+    AuthenticationKey = 'authenticationKey'
 }
 
 export enum EntryType {
     Create = 'DIDManagement',
     Update = 'DIDUpdate',
     Deactivation = 'DIDDeactivation',
-    VersionUpgrade = 'DIDMethodVersionUpgrade',
+    VersionUpgrade = 'DIDMethodVersionUpgrade'
 }

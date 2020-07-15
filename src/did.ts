@@ -14,7 +14,7 @@ import {
     DID_METHOD_SPEC_V020,
     DID_METHOD_NAME,
     ENTRY_SCHEMA_V100,
-    ENTRY_SIZE_LIMIT,
+    ENTRY_SIZE_LIMIT
 } from './constants';
 
 /**
@@ -54,7 +54,7 @@ export class DID {
             throw new Error('The DID must have at least one management key.');
         }
 
-        if (!this.managementKeys.some((mk) => mk.priority === 0)) {
+        if (!this.managementKeys.some(mk => mk.priority === 0)) {
             throw new Error('At least one management key must have priority 0.');
         }
 
@@ -62,7 +62,7 @@ export class DID {
         const extIds: Buffer[] = [
             Buffer.from(EntryType.Create, 'utf-8'),
             Buffer.from(ENTRY_SCHEMA_V100, 'utf-8'),
-            this.nonce as Buffer,
+            this.nonce as Buffer
         ];
 
         const entrySize = calculateEntrySize(extIds, content);
@@ -82,15 +82,15 @@ export class DID {
     private _buildDIDDocument(): DIDDocument {
         const didDocument: DIDDocument = {
             didMethodVersion: this.specVersion as string,
-            managementKey: this.managementKeys.map((k) => k.toEntryObj(this.id)),
+            managementKey: this.managementKeys.map(k => k.toEntryObj(this.id))
         };
 
         if (this.didKeys.length > 0) {
-            didDocument.didKey = this.didKeys.map((k) => k.toEntryObj(this.id));
+            didDocument.didKey = this.didKeys.map(k => k.toEntryObj(this.id));
         }
 
         if (this.services.length > 0) {
-            didDocument.service = this.services.map((s) => s.toEntryObj(this.id));
+            didDocument.service = this.services.map(s => s.toEntryObj(this.id));
         }
 
         return didDocument;
@@ -153,15 +153,15 @@ export class DIDBuilder {
         this._usedKeyAliases = new Set();
         this._usedServiceAliases = new Set();
 
-        this.managementKeys.forEach((key) => {
+        this.managementKeys.forEach(key => {
             this._checkAliasIsUnique(this._usedKeyAliases, key.alias);
         });
 
-        this.didKeys.forEach((key) => {
+        this.didKeys.forEach(key => {
             this._checkAliasIsUnique(this._usedKeyAliases, key.alias);
         });
 
-        this.services.forEach((service) => {
+        this.services.forEach(service => {
             this._checkAliasIsUnique(this._usedServiceAliases, service.alias);
         });
     }
@@ -186,7 +186,10 @@ export class DIDBuilder {
      * @returns {string} The chain ID where this DID is (or will be) stored.
      */
     get chainId(): string {
-        return this._id.split(':').slice(-1).pop() as string;
+        return this._id
+            .split(':')
+            .slice(-1)
+            .pop() as string;
     }
 
     /**
@@ -351,7 +354,7 @@ export class DIDBuilder {
         const chainId = calculateChainId([
             EntryType.Create,
             ENTRY_SCHEMA_V100,
-            this._nonce as Buffer,
+            this._nonce as Buffer
         ]);
         return `${DID_METHOD_NAME}:${chainId}`;
     }

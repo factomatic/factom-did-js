@@ -2,8 +2,8 @@ import { assert } from 'chai';
 import { DID, Service } from '../src/factom-did';
 import { DID_METHOD_NAME } from '../src/constants';
 
-describe('Test Services', function () {
-    it('should add services', function () {
+describe('Test Services', function() {
+    it('should add services', function() {
         const firstServiceAlias = 'photo-service';
         const firstServiceType = 'PhotoStreamService';
         const firstServiceEndpoint = 'https://myphoto.com';
@@ -21,8 +21,8 @@ describe('Test Services', function () {
             description: 'My public social inbox',
             spamCost: {
                 amount: '0.50',
-                currency: 'USD',
-            },
+                currency: 'USD'
+            }
         };
 
         const did = DID.builder()
@@ -72,12 +72,12 @@ describe('Test Services', function () {
         assert.strictEqual(did.services.length, 3);
     });
 
-    it('should throw error if alias is invalid', function () {
+    it('should throw error if alias is invalid', function() {
         const builder = DID.builder();
         const serviceType = 'PhotoStreamService';
         const serviceEndpoint = 'https://myphoto.com';
         const testCases = ['myDidKey', 'my-d!d-key', 'my_did_key'];
-        testCases.forEach((alias) => {
+        testCases.forEach(alias => {
             assert.throw(
                 () => builder.service(alias, serviceType, serviceEndpoint),
                 'Alias must not be more than 32 characters long and must contain only lower-case letters, digits and hyphens.'
@@ -85,7 +85,7 @@ describe('Test Services', function () {
         });
     });
 
-    it('should throw error if alias is used', function () {
+    it('should throw error if alias is used', function() {
         const builder = DID.builder();
         const serviceAlias = 'my-photo-service';
         const serviceType = 'PhotoStreamService';
@@ -97,12 +97,12 @@ describe('Test Services', function () {
         );
     });
 
-    it('should throw error if serviceType is empty or undefined', function () {
+    it('should throw error if serviceType is empty or undefined', function() {
         const builder = DID.builder();
         const serviceAlias = 'my-photo-service';
         const serviceEndpoint = 'https://myphoto.com';
         const testCases = ['', undefined];
-        testCases.forEach((serviceType) => {
+        testCases.forEach(serviceType => {
             assert.throw(
                 () => builder.service(serviceAlias, serviceType as string, serviceEndpoint),
                 'Service type is required!'
@@ -110,7 +110,7 @@ describe('Test Services', function () {
         });
     });
 
-    it('should throw error if endpoint is invalid', function () {
+    it('should throw error if endpoint is invalid', function() {
         const builder = DID.builder();
         const serviceType = 'PhotoStreamService';
         const testCases = ['myservice.com', 'https//myphoto.com'];
@@ -122,7 +122,7 @@ describe('Test Services', function () {
         });
     });
 
-    it('should throw error if priorityRequired is invalid', function () {
+    it('should throw error if priorityRequired is invalid', function() {
         const builder = DID.builder();
         const serviceType = 'PhotoStreamService';
         const serviceEndpoint = 'https://myphoto.com';
@@ -141,7 +141,7 @@ describe('Test Services', function () {
         });
     });
 
-    it('should throw error if customFields is invalid', function () {
+    it('should throw error if customFields is invalid', function() {
         const builder = DID.builder();
         const serviceType = 'PhotoStreamService';
         const serviceEndpoint = 'https://myphoto.com';
@@ -161,7 +161,7 @@ describe('Test Services', function () {
         });
     });
 
-    it('should throw error if entry schema version is invalid', function () {
+    it('should throw error if entry schema version is invalid', function() {
         const didId = `${DID_METHOD_NAME}:db4549470d24534fac28569d0f9c65b5ecef8d6332bc788b4d1b8dc1c2dae13a`;
         const service = new Service('gmail-service', 'EmailService', 'https://gmail.com', 1);
         const entrySchemaVersion = '1.1.0';

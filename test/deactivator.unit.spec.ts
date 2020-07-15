@@ -9,7 +9,7 @@ import {
     EntryType,
     KeyType,
     DIDKeyPurpose,
-    Service,
+    Service
 } from '../src/factom-did';
 import { DID_METHOD_NAME, ENTRY_SCHEMA_V100 } from '../src/constants';
 
@@ -18,7 +18,7 @@ use(chaibytes);
 const didId = `${DID_METHOD_NAME}:${Network.Mainnet}:db4549470d24534fac28569d0f9c65b5ecef8d6332bc788b4d1b8dc1c2dae13a`;
 const managementKeys = [
     new ManagementKey('my-first-mgmt-key', 0, KeyType.EdDSA, didId),
-    new ManagementKey('my-second-mgmt-key', 1, KeyType.ECDSA, didId, 0),
+    new ManagementKey('my-second-mgmt-key', 1, KeyType.ECDSA, didId, 0)
 ];
 const didKeys = [
     new DIDKey('did-key-1', DIDKeyPurpose.AuthenticationKey, KeyType.EdDSA, didId),
@@ -28,19 +28,19 @@ const didKeys = [
         KeyType.ECDSA,
         didId,
         1
-    ),
+    )
 ];
 const services = [new Service('gmail-service', 'EmailService', 'https://gmail.com', 2)];
 
-describe('Test DID Deactivator', function () {
-    it('should throw error if you try to deactivate DID without management keys', function () {
+describe('Test DID Deactivator', function() {
+    it('should throw error if you try to deactivate DID without management keys', function() {
         assert.throw(
             () => DID.builder().deactivate(),
             'Cannot deactivate DID without a management key of priority 0.'
         );
     });
 
-    it('should throw error if you try to deactivate DID without management key with priority 0', function () {
+    it('should throw error if you try to deactivate DID without management key with priority 0', function() {
         assert.throw(
             () =>
                 DID.builder(
@@ -52,7 +52,7 @@ describe('Test DID Deactivator', function () {
         );
     });
 
-    it('should export deactivation data correctly', function () {
+    it('should export deactivation data correctly', function() {
         const did = DID.builder(didId, [...managementKeys], [...didKeys], [...services]);
 
         const entryData = did.deactivate().exportEntryData();

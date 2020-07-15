@@ -46,7 +46,7 @@ export class DIDVersionUpgrader {
             Buffer.from(EntryType.VersionUpgrade),
             Buffer.from(ENTRY_SCHEMA_V100),
             Buffer.from(signingKeyId),
-            Buffer.from(signature),
+            Buffer.from(signature)
         ];
 
         return { extIds, content: Buffer.from(entryContent) };

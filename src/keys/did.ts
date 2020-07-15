@@ -45,7 +45,7 @@ export class DIDKey extends AbstractDIDKey {
             );
         }
 
-        purposes.forEach((p) => {
+        purposes.forEach(p => {
             if (![DIDKeyPurpose.PublicKey, DIDKeyPurpose.AuthenticationKey].includes(p)) {
                 throw new Error('Purpose must contain only valid DIDKeyPurpose values.');
             }

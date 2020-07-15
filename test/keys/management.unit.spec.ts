@@ -2,8 +2,8 @@ import { assert } from 'chai';
 import { DID, ManagementKey, KeyType } from '../../src/factom-did';
 import { DID_METHOD_NAME } from '../../src/constants';
 
-describe('Test Management Keys', function () {
-    it('should add management keys', function () {
+describe('Test Management Keys', function() {
+    it('should add management keys', function() {
         const firstMgmtKeyAlias = 'management-key-1';
         const firstMgmtKeyPriority = 0;
 
@@ -68,10 +68,10 @@ describe('Test Management Keys', function () {
         assert.strictEqual(did.managementKeys.length, 3);
     });
 
-    it('should throw error if alias is invalid', function () {
+    it('should throw error if alias is invalid', function() {
         const builder = DID.builder();
         const testCases = ['myManagementKey', 'my-m@nagement-key', 'my_management_key'];
-        testCases.forEach((alias) => {
+        testCases.forEach(alias => {
             assert.throw(
                 () => builder.managementKey(alias, 0),
                 'Alias must not be more than 32 characters long and must contain only lower-case letters, digits and hyphens.'
@@ -79,7 +79,7 @@ describe('Test Management Keys', function () {
         });
     });
 
-    it('should throw error if priority is invalid', function () {
+    it('should throw error if priority is invalid', function() {
         const builder = DID.builder();
         const testCases = [-1, -2, 'one', 1.5];
         testCases.forEach((priority, index) => {
@@ -90,7 +90,7 @@ describe('Test Management Keys', function () {
         });
     });
 
-    it('should throw error if alias is used', function () {
+    it('should throw error if alias is used', function() {
         const builder = DID.builder();
         const managementKeyAlias = 'management-key-1';
         builder.managementKey(managementKeyAlias, 0);
@@ -100,7 +100,7 @@ describe('Test Management Keys', function () {
         );
     });
 
-    it('should throw error if keyType is invalid', function () {
+    it('should throw error if keyType is invalid', function() {
         const builder = DID.builder();
         const managementKeyAlias = 'management-key-1';
         const managementKeyType = 'invalidKeyType';
@@ -110,12 +110,12 @@ describe('Test Management Keys', function () {
         );
     });
 
-    it('should throw error if controller is invalid', function () {
+    it('should throw error if controller is invalid', function() {
         const builder = DID.builder();
         const testCases = [
             `${DID_METHOD_NAME}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654h05f838b8005`,
             'did:fctr:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b8005',
-            `${DID_METHOD_NAME}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b800`,
+            `${DID_METHOD_NAME}:d3936b2f0bdd45fe71d7156e835434b7970afd78868076f56654d05f838b800`
         ];
         testCases.forEach((controller, index) => {
             assert.throw(
@@ -131,7 +131,7 @@ describe('Test Management Keys', function () {
         });
     });
 
-    it('should throw error if priorityRequired is invalid', function () {
+    it('should throw error if priorityRequired is invalid', function() {
         const builder = DID.builder();
         const testCases = [-1, -2, 'one', 1.5];
         testCases.forEach((priorityRequirement, index) => {
@@ -149,7 +149,7 @@ describe('Test Management Keys', function () {
         });
     });
 
-    it('should throw error if entry schema version is invalid', function () {
+    it('should throw error if entry schema version is invalid', function() {
         const didId = `${DID_METHOD_NAME}:db4549470d24534fac28569d0f9c65b5ecef8d6332bc788b4d1b8dc1c2dae13a`;
         const key = new ManagementKey('management-key-1', 0, KeyType.EdDSA, didId);
         const entrySchemaVersion = '1.1.0';
